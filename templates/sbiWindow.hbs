@@ -1,0 +1,20 @@
+<form>
+    <section id="sbi-top">
+        <div class="form-group">
+            <label for="sbi-import-autoparse">Auto parse:
+                <input id="sbi-import-autoparse" type="checkbox" checked="checked" />
+            </label>
+            <button id="sbi-import-parse" type="button">Parse</button>
+        </div>
+    </section>
+    <div id="sbi-input" contenteditable="plaintext-only" data-placeholder="Usage:
+- Paste the full statblock text into this box. It should follow WotC formatting to be imported correctly.
+- If you need to, you can edit the text here to fix any errors and then re-import.
+
+Report any bugs using the module link, and add the statblock you were trying to import."></div>
+    <section id="sbi-bottom">
+        <span id="sbi-import-text">Folder to import to:</span>
+        <select id="sbi-import-select"></select>
+        <button id="sbi-import-button" type="button">Import</button>
+    </section>
+</form>

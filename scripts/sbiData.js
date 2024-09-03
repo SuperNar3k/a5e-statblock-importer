@@ -6,7 +6,7 @@ export class BlockID {
     static challenge = "challenge";
     static conditionImmunities = "conditionImmunities";
     static damageImmunities = "damageImmunities";
-    static damageResistances = "damageResistences";
+    static damageResistances = "damageResistances";
     static damageVulnerabilities = "damageVulnerabilities";
     static features = "features";
     static health = "health";
@@ -25,6 +25,36 @@ export class BlockID {
     static traits = "traits";
     static utilitySpells = "utilitySpells";
     static villainActions = "villainActions";
+}
+
+export const BlockName = {
+    name: "Name",
+    armor: "Armor",
+    actions: "Actions",
+    abilities: "Abilities",
+    bonusActions: "Bonus Actions",
+    challenge: "Challenge",
+    conditionImmunities: "Condition Immunities",
+    damageImmunities: "Damage Immunities",
+    damageResistances: "Damage Resistances",
+    damageVulnerabilities: "Damage Vulnerabilities",
+    features: "Features",
+    health: "Health",
+    lairActions: "Lair Actions",
+    languages: "Languages",
+    legendaryActions: "Legendary Actions",
+    mythicActions: "Mythic Actions",
+    proficiencyBonus: "Proficiency Bonus",
+    racialDetails: "Racial Details",
+    reactions: "Reactions",
+    savingThrows: "Saving Throws",
+    senses: "Senses",
+    skills: "Skills",
+    souls: "Souls",
+    speed: "Speed",
+    traits: "Traits",
+    utilitySpells: "Utility Spells",
+    villainActions: "Villain Actions"
 }
 
 export const TopBlocks = [

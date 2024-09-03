@@ -1,6 +1,5 @@
 import { sbiUtils as sUtils } from "./sbiUtils.js";
 import { sbiRegex as sRegex } from "./sbiRegex.js";
-import { sbiActor as sActor } from "./sbiActor.js";
 import {
     CreatureData,
     ArmorData,
@@ -20,7 +19,7 @@ import {
 //  - Create the Foundry data object from the parts
 
 export class sbiParser {
-    static async parseInput(lines, selectedFolderId) {
+    static async parseInput(lines) {
         const creature = new CreatureData("unknown");
 
         if (lines.length) {
@@ -86,17 +85,17 @@ export class sbiParser {
                 }
 
                 if (statBlocks.has(lastBlockId)) {
-                    statBlocks.get(lastBlockId).push(line);
+                    statBlocks.get(lastBlockId).push({lineNumber: i, line});
                 }
             }
 
             // Remove everything we've found so far and see what we end up with.
-            const foundLines = [...statBlocks.values()].flat();
+            const foundLines = [...statBlocks.values()].flat().map(l => l.line);
             let resultArray = lines.map(l => l.trim()).filter(item => !foundLines.includes(item));
 
             if (resultArray.length) {
                 sUtils.log("Found unaccounted for lines.");
-                debugger
+                //debugger;
             }
 
             for (let [key, value] of statBlocks.entries()) {
@@ -127,7 +126,7 @@ export class sbiParser {
                         this.setChallenge(value, creature);
                         break;
                     case BlockID.conditionImmunities:
-                        this.setDamagesAndConditions(value, BlockID.conditionImmunities, creature);
+                        this.setDamagesAndConditions(value, key, creature);
                         break;
                     case BlockID.damageImmunities:
                         this.setDamagesAndConditions(value, DamageConditionId.immunities, creature);
@@ -162,14 +161,13 @@ export class sbiParser {
                 }
             }
 
-            const actor = await sActor.convertCreatureToActorAsync(creature, selectedFolderId);
-
-            // Open the sheet.
-            actor.sheet.render(true);
+            return { creature, statBlocks };
         }
     }
 
     static setActions(lines, type, creature) {
+        const fullLines = [...lines];
+        lines = lines.map(l => l.line);
         // Remove the first line because it's just the block name,
         // except for features because they don't have a heading.
         if (type !== BlockID.features) {
@@ -180,7 +178,7 @@ export class sbiParser {
             creature[type] = this.getVillainActions(lines);
         } else if (type === BlockID.features) {
             const featureDatas = [];
-
+            
             for (const actionData of this.getBlockDatas(lines)) {
                 const nameLower = actionData.name.toLowerCase();
 
@@ -207,10 +205,11 @@ export class sbiParser {
     }
 
     static setArmor(lines, creature) {
-        const line = sUtils.combineToString(lines);
+        const line = sUtils.combineToString(lines.map(l => l.line));
         const match = sRegex.armorDetails.exec(line);
         if (!match) return;
 
+        lines.matchData = match.indices.groups;
         // AC value
         const ac = match.groups.ac;
         // Armor types, like "natural armor" or "leather armor, shield"
@@ -219,15 +218,18 @@ export class sbiParser {
         creature.armor = new ArmorData(parseInt(ac), armorTypes);
     }
 
-    static setAbilities(lines, creature) {
+    static setAbilities(fullLines, creature) {
         const foundLines = [];
 
         // Check for standard abilities first.
         ////////////////////////////////////////////////
         const foundAbilityNames = [];
-        const foundAbilityValues = []
+        const foundAbilityValues = [];
+        const abilitiesMatchedData = [];
 
-        for (const line of lines) {
+        const lines = fullLines.map(l => l.line);
+        for (const l in lines) {
+            const line = lines[l];
             const trimmedLine = line.trim();
 
             // Names come before values, so if we've found all the values then we've found all the names.
@@ -250,10 +252,12 @@ export class sbiParser {
             if (valueMatches.length) {
                 const values = valueMatches.map(m => m.groups.base);
                 foundAbilityValues.push.apply(foundAbilityValues, values);
+                abilitiesMatchedData.push(...valueMatches.map(m => ({...m.indices.groups, line: fullLines[l].lineNumber})));
                 foundLines.push(line);
             }
         }
 
+        fullLines.matchData = abilitiesMatchedData;
         const abilitiesData = [];
 
         for (let i = 0; i < foundAbilityNames.length; i++) {
@@ -264,10 +268,11 @@ export class sbiParser {
     }
 
     static setChallenge(lines, creature) {
-        const line = sUtils.combineToString(lines);
+        const line = sUtils.combineToString(lines.map(l => l.line));
         const match = sRegex.challengeDetails.exec(line);
         if (!match) return;
 
+        lines.matchData = match.indices.groups;
         const crValue = match.groups.cr;
         let cr = 0;
 
@@ -295,28 +300,41 @@ export class sbiParser {
 
     // Example: Damage Vulnerabilities bludgeoning, fire
     static setDamagesAndConditions(lines, type, creature) {
-        let line = sUtils.combineToString(lines);
+        let line = sUtils.combineToString(lines.map(l => l.line));
+        let offset = 0;
 
         // Remove the type name.
         switch (type) {
             case DamageConditionId.immunities:
                 line = line.replace(/damage immunities/i, "").trim();
+                offset = "damage immunities".length + 1;
                 break;
             case DamageConditionId.resistances:
                 line = line.replace(/damage resistances/i, "").trim();
+                offset = "damage resistances".length + 1;
                 break;
             case DamageConditionId.vulnerabilities:
                 line = line.replace(/damage vulnerabilities/i, "").trim();
+                offset = "damage vulnerabilities".length + 1;
                 break;
             case BlockID.conditionImmunities:
                 line = line.replace(/condition immunities/i, "").trim();
+                offset = "condition immunities".length + 1;
                 break;
         }
 
         const regex = type === BlockID.conditionImmunities ? sRegex.conditionTypes : sRegex.damageTypes;
+        const match = [...line.matchAll(regex)];
+        
+        for (let m of match) {
+            for (let g in m.indices.groups) {
+                m.indices.groups[g] = m.indices.groups[g].map(i => i + offset);
+            }
+        }
+        lines.matchData = match.map(m => m.indices.groups);
 
         // Parse out the known damage types.
-        const knownTypes = [...line.matchAll(regex)]
+        const knownTypes = match
             .filter(arr => arr[0].length)
             .map(arr => arr[0].toLowerCase());
 
@@ -373,71 +391,65 @@ export class sbiParser {
     }
 
     static setRoll(lines, type, creature) {
-        const line = sUtils.combineToString(lines);
+        const line = sUtils.combineToString(lines.map(l => l.line));
         const match = sRegex.rollDetails.exec(line);
         if (!match) return;
 
+        lines.matchData = match.indices.groups;
         creature[type] = new RollData(parseInt(match.groups.value), match.groups.formula);
     }
 
-    // TODO: use a regex of all known languages, like the one for damage types, so that
-    // it handles "Common plus up to five other languages" correctly. Right now, it doesn't
-    // set the flag for Common. This would take care of the comma problem too.
     static setLanguages(lines, creature) {
         const trimCount = "Languages".length;
-        const line = sUtils.combineToString(lines).slice(trimCount).trim();
-        let modLine = line;
-
-        // Fix for a language value like "all, telepathy 1,000 ft."
-        // Replace the comma in numbers so that we can ignore it when gathering the languages.
-        for (let index = 0; index < line.length; index++) {
-            if (index > 0 && index < line.length - 1) {
-                const curLetter = line[index];
-                const lastLetter = line[index - 1];
-                const nextLetter = line[index + 1];
-
-                if (curLetter === "," && !isNaN(Number(lastLetter) && !isNaN(nextLetter))) {
-                    modLine = sUtils.replaceAt(line, index, "!");
-                }
+        const line = sUtils.combineToString(lines.map(l => l.line)).slice(trimCount).trim();
+        const regex = sRegex.knownLanguages;
+        const match = [...line.matchAll(regex)];
+        for (let m of match) {
+            for (let g in m.indices.groups) {
+                m.indices.groups[g] = m.indices.groups[g].map(i => i + trimCount + 1);
             }
         }
-
-        // Gather languages here by splitting on commas, and then putting the commas we removed above back in.
-        const values = modLine.split(",").map(str => str.toLowerCase().trim().replace("!", ","));
-        const knownValues = sUtils.intersect(values, KnownLanguages);
-        const unknownValues = sUtils.except(values, knownValues).map(str => sUtils.capitalizeFirstLetter(str));
-
-        creature.language = new LanguageData(knownValues, unknownValues);
+        lines.matchData = match.map(m => m.indices.groups);
+        const knownLanguages = match
+            .filter(arr => arr[0].length)
+            .map(arr => arr[0].toLowerCase());
+        const unknownLanguages = line.replaceAll(regex, "").replaceAll(/(,\s)+/g, ";").replaceAll(/,,+/g, ";").replace(/^;/, "").split(";").map(lang => sUtils.capitalizeFirstLetter(lang));
+        creature.language = new LanguageData(knownLanguages, unknownLanguages);
     }
 
     static setSavingThrows(lines, creature) {
-        const line = sUtils.combineToString(lines);
+        const line = sUtils.combineToString(lines.map(l => l.line));
+
+        const match = [...line.matchAll(sRegex.abilityNames)];
+        lines.matchData = match.map(m => m.indices.groups);
 
         // Save off the ability names associated with the saving throws.
         // No need to save the modifier numbers because that's calculated 
         // by Foundry when they're added to the actor.
-        creature.savingThrows = [...line.matchAll(sRegex.abilityNames)]
-            .map(m => m[0]);
+        creature.savingThrows = match.map(m => m[0]);
     }
 
     // Example: Senses darkvision 60 ft., passive Perception 18
     static setSenses(lines, creature) {
-        const line = sUtils.combineToString(lines);
+        const line = sUtils.combineToString(lines.map(l => l.line));
         const matches = [...line.matchAll(sRegex.sensesDetails)];
+        lines.matchData = matches.map(m => m.indices.groups);
         creature.senses = matches.map(m => new NameValueData(m.groups.name, m.groups.modifier));
     }
 
     static setSkills(lines, creature) {
-        const line = sUtils.combineToString(lines);
+        const line = sUtils.combineToString(lines.map(l => l.line));
         const matches = [...line.matchAll(sRegex.skillDetails)];
+        lines.matchData = matches.map(m => m.indices.groups);
         creature.skills = matches.map(m => new NameValueData(m.groups.name, m.groups.modifier));
     }
 
     static setSpeed(lines, creature) {
-        const line = sUtils.combineToString(lines);
+        const line = sUtils.combineToString(lines.map(l => l.line));
         const match = [...line.matchAll(sRegex.speedDetails)];
         if (!match) return;
 
+        lines.matchData = match.map(m => m.indices.groups);
         const speeds = match
             .map(m => new NameValueData(m.groups.name, m.groups.value))
             .filter(nv => nv.name != null && nv.value != null);
@@ -450,10 +462,11 @@ export class sbiParser {
     }
 
     static setRacialDetails(lines, creature) {
-        const line = sUtils.combineToString(lines);
+        const line = sUtils.combineToString(lines.map(l => l.line));
         const match = [...line.matchAll(sRegex.racialDetails)][0];
         if (!match) return;
 
+        lines.matchData = match.indices.groups;
         creature.size = match.groups.size;
         creature.alignment = match.groups.alignment?.trim();
         creature.race = match.groups.race?.trim();
