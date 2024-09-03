@@ -48,20 +48,13 @@ jobs:
           echo "ZIPURL=${{ github.server_url }}/${{ github.repository }}/releases/download/${FULLVERSION}/5e-statblock-importer-${FULLVERSION}.zip" >> "$GITHUB_OUTPUT"
           echo "MODULEJSONURL=${{ github.server_url }}/${{ github.repository }}/releases/download/${FULLVERSION}/module.json" >> "$GITHUB_OUTPUT"
           echo "VERSION=${FULLVERSION#v}" >> $GITHUB_OUTPUT
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
       - name: Update module.json
         uses: restackio/update-json-file-action@2.1
         with:
           file: module.json
           fields: "{\"version\": \"${{ steps.set_vars.outputs.VERSION }}\", \"download\": \"${{ steps.set_vars.outputs.ZIPURL }}\"}"
       - name: Build Project
-        run: |
-          npm install
-          npm run build
-          zip 5e-statblock-importer-${{ steps.get_version.outputs.FULLVERSION }}.zip module.json LICENSE README.md scripts/* styles/* templates/* testBlocks/*
+        run: zip 5e-statblock-importer-${{ steps.get_version.outputs.FULLVERSION }}.zip module.json LICENSE README.md scripts/* styles/* templates/* testBlocks/*
       - name: Create Release And Upload Asset
         id: create-release-upload
         uses: softprops/action-gh-release@v2
