@@ -3,7 +3,7 @@
     "name": "5e-statblock-importer",
     "title": "5e Statblock Importer",
     "description": "Import monster and NPC statblocks for D&D 5e",
-    "version": "1.83.03",
+    "version": "1.90.0",
     "compatibility": {
         "minimum": "10",
         "maximum": "12",
@@ -12,6 +12,11 @@
     "minimumCoreVersion": "10",
     "compatibleCoreVersion": "12",
     "authors": [
+        {
+            "name": "Aioros",
+            "email": "aioros83@gmail.com",
+            "discord": "MrAioros"
+        },
         {
             "name": "ArcaneRoboBrain",
             "discord": "ArcaneRoboBrain#6885",
@@ -31,7 +36,7 @@
     "styles": [
         "./styles/sbi.css"
     ],
-    "url": "https://github.com/jbhaywood/5e-statblock-importer",
-    "manifest": "https://raw.githubusercontent.com/jbhaywood/5e-statblock-importer/main/module.json",
-    "download": "https://github.com/jbhaywood/5e-statblock-importer/archive/v1.83.03.zip"
+    "url": "https://github.com/Aioros/5e-statblock-importer",
+    "manifest": "https://raw.githubusercontent.com/Aioros/5e-statblock-importer/main/module.json",
+    "download": "https://github.com/Aioros/5e-statblock-importer/releases/download/v1.90.0/5e-statblock-importer-v1.90.0.zip"
 }
