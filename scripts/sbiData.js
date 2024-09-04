@@ -82,34 +82,6 @@ export class DamageConditionId {
     static vulnerabilities = "vulnerabilities";
 }
 
-export const KnownLanguages = [
-    "aarakocra",
-    "abyssal",
-    "aquan",
-    "auran",
-    "celestial",
-    "common",
-    "deep",
-    "draconic",
-    "druidic",
-    "dwarvish",
-    "elvish",
-    "giant",
-    "gith",
-    "gnoll",
-    "gnomish",
-    "goblin",
-    "halfling",
-    "ignan",
-    "infernal",
-    "orc",
-    "primordial",
-    "sylvan",
-    "terran",
-    "cant",
-    "undercommon"
-];
-
 export const KnownCreatureTypes = [
     "aberration",
     "celestial",

@@ -10,7 +10,6 @@ import {
     DamageConditionId,
     BlockID,
     TopBlocks,
-    KnownLanguages,
     KnownCreatureTypes
 } from "./sbiData.js";
 
@@ -413,7 +412,7 @@ export class sbiParser {
         const knownLanguages = match
             .filter(arr => arr[0].length)
             .map(arr => arr[0].toLowerCase());
-        const unknownLanguages = line.replaceAll(regex, "").replaceAll(/(,\s)+/g, ";").replaceAll(/,,+/g, ";").replace(/^;/, "").split(";").map(lang => sUtils.capitalizeFirstLetter(lang));
+        const unknownLanguages = line.replaceAll(regex, "").replaceAll(/(,\s)+/g, ";").replaceAll(/,,+/g, ";").replace(/^;/, "").split(";").filter(l => l).map(lang => sUtils.capitalizeFirstLetter(lang));
         creature.language = new LanguageData(knownLanguages, unknownLanguages);
     }
 
