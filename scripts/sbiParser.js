@@ -181,12 +181,20 @@ export class sbiParser {
             for (const actionData of this.getBlockDatas(lines)) {
                 const nameLower = actionData.name.toLowerCase();
 
-                if (nameLower === "spellcasting") {
-                    creature.spellcasting = this.getSpells(actionData.value, sRegex.spellLine);
-                } else if (nameLower === "innate spellcasting") {
-                    creature.innateSpellcasting = this.getSpells(actionData.value, sRegex.spellInnateLine);
-                } else {
+                if (!["spellcasting", "innate spellcasting"].includes(nameLower)) {
                     featureDatas.push(new NameValueData(actionData.name, actionData.value));
+                } else {
+                    let spellInfo, spellRegex, spellcastingType;
+                    if (nameLower === "spellcasting") {
+                        spellRegex = sRegex.spellLine;
+                        spellcastingType = "spellcasting";
+                    } else {
+                        spellRegex = sRegex.spellInnateLine;
+                        spellcastingType = "innateSpellcasting";
+                    }
+                    spellInfo = this.getSpells(actionData.value, spellRegex);
+                    creature[spellcastingType] = spellInfo;
+                    featureDatas.push(new NameValueData(sUtils.capitalizeAll(nameLower), spellInfo[0].value + "<br>" + spellInfo.slice(1).map(sl => sl.name + ": " + sl.value.join(", ")).join("<br>")));
                 }
             }
 
@@ -196,9 +204,19 @@ export class sbiParser {
 
             // There should only be one block under the Utility Spells title.
             if (spellDatas.length === 1) {
-                creature.utilitySpells = this.getSpells(spellDatas[0].value, sRegex.spellInnateLine);
+                let spellInfo = this.getSpells(spellDatas[0].value, sRegex.spellInnateLine);
+                creature.utilitySpells = spellInfo;
+                creature[BlockID.features].push(new NameValueData("Utility Spells", spellInfo[0].value + "<br>" + spellInfo.slice(1).map(sl => sl.name + ": " + sl.value.join(", ")).join("<br>")));
             }
         } else {
+            let blockDatas = this.getBlockDatas(lines);
+            let spellcastingOutsideFeatures = blockDatas.find(b => b.name.toLowerCase() == "spellcasting");
+            if (spellcastingOutsideFeatures) {
+                blockDatas = blockDatas.filter(b => b.name !== spellcastingOutsideFeatures.name);
+                let spellInfo = this.getSpells(spellcastingOutsideFeatures.value, sRegex.spellInnateLine);
+                creature.innateSpellcasting = spellInfo;
+                blockDatas.push(new NameValueData(spellcastingOutsideFeatures.name, spellInfo[0].value + "<br>" + spellInfo.slice(1).map(sl => sl.name + ": " + sl.value.join(", ")).join("<br>")));
+            }
             creature[type] = this.getBlockDatas(lines);
         }
     }
