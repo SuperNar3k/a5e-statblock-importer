@@ -140,6 +140,7 @@ export class sbiActor {
                     itemData.name = itemData.name.slice(0, actionCostMatch.index).trim();
                 }
 
+                this.setRecharge(itemData.name, itemData);
                 sUtils.assignToObject(itemData, "system.consume.type", "attribute");
                 sUtils.assignToObject(itemData, "system.consume.target", "resources.legact.value");
                 sUtils.assignToObject(itemData, "system.consume.amount", actionCost);
@@ -178,6 +179,7 @@ export class sbiActor {
             sUtils.assignToObject(itemData, "system.activation.type", activationType);
 
             this.setPerDay(name, itemData);
+            this.setRecharge(name, itemData);
             await this.setItemAsync(itemData, actor);
         }
     }
