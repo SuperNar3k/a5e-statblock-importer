@@ -230,7 +230,7 @@ export class sbiParser {
         // AC value
         const ac = match.groups.ac;
         // Armor types, like "natural armor" or "leather armor, shield"
-        const armorTypes = match.groups.armortype?.split(",").map(str => str.trim());
+        const armorTypes = match.groups.armorType?.split(",").map(str => str.trim());
 
         creature.armor = new ArmorData(parseInt(ac), armorTypes);
     }
@@ -487,7 +487,7 @@ export class sbiParser {
         creature.size = match.groups.size;
         creature.alignment = match.groups.alignment?.trim();
         creature.race = match.groups.race?.trim();
-        creature.swarmSize = match.groups.swarmsize?.trim();
+        creature.swarmSize = match.groups.swarmSize?.trim();
 
         const creatureType = match.groups.type?.toLowerCase().trim();
         let singleCreatureType = creatureType.endsWith('s') ? creatureType.slice(0, -1) : creatureType;

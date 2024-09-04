@@ -79,7 +79,7 @@ export class sbiWindow extends Application {
                                     lines[lineNumber] = [lines[lineNumber].slice(0, orderedMatches[m].indices[1] - previousLinesLength), "</span>", lines[lineNumber].slice(orderedMatches[m].indices[1] - previousLinesLength)].join("");
                                     lines[lineNumber] = [
                                         lines[lineNumber].slice(0, orderedMatches[m].indices[0] - previousLinesLength),
-                                        `<span class="matched" data-tooltip="${BlockName[key] + ": " + sbiUtils.camelToTitleCase(orderedMatches[m].label)}">`,
+                                        `<span class="matched" data-tooltip="${BlockName[key] + ": " + sbiUtils.camelToTitleUpperIfTwoLetters(orderedMatches[m].label)}">`,
                                         lines[lineNumber].slice(orderedMatches[m].indices[0] - previousLinesLength)
                                     ].join("").trim();
                                 }

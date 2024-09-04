@@ -23,7 +23,7 @@ export class sbiRegex {
     static proficiencyBonus = /^proficiency bonus\s\+/i;
     // The racial details line is here instead of below because it doesn't have a 
     // standard starting word, so we have to look at the whole line.
-    static racialDetails = /^(?<size>\bfine\b|\bdiminutive\b|\btiny\b|\bsmall\b|\bmedium\b|\blarge\b|\bhuge\b|\bgargantuan\b|\bcolossal\b)(\sswarm of (?<swarmsize>\w+))?\s(?<type>\w+)([,\s]+\((?<race>[,\w\s]+)\))?([,\s]+(?<alignment>[\w\s\-]+))?/idg;
+    static racialDetails = /^(?<size>\bfine\b|\bdiminutive\b|\btiny\b|\bsmall\b|\bmedium\b|\blarge\b|\bhuge\b|\bgargantuan\b|\bcolossal\b)(\sswarm of (?<swarmSize>\w+))?\s(?<type>\w+)([,\s]+\((?<race>[,\w\s]+)\))?([,\s]+(?<alignment>[\w\s\-]+))?/idg;
     static reactions = /^reactions$/i;
     static savingThrows = /^(saving throws|saves)\s(\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b)/i;
     static senses = /^senses( passive)?(.+\d+\s\bft\b)?/i;
@@ -35,16 +35,16 @@ export class sbiRegex {
     static villainActions = /^villain actions$/i;
 
     // Regexes for pulling the details out of the lines we identified using the ones above.
-    static armorDetails = /(?<ac>\d+)( \((?<armortype>.+)\))?/id;
+    static armorDetails = /(?<ac>\d+)( \((?<armorType>.+)\))?/id;
     static challengeDetails = /(?<cr>(½|[\d\/]+))\s?(\((?<xp>[\d,]+)\s?xp\))?/id;
     static rollDetails = /(?<value>\d+)\s?(\((?<formula>\d+d\d+(\s?[\+\-−–]\s?\d+)?)\))?/id;
-    static perDayDetails = /(?<perday>\d+)\/day/i;
+    static perDayDetails = /(?<perDay>\d+)\/day/i;
     static roleDetails = /\d+\s(?<role>\w+)/i;
-    static savingThrowDetails = /must (make|succeed on) a dc (?<savedc>\d+) (?<saveability>\w+) (?<savetext>saving throw|save)/i;
+    static savingThrowDetails = /must (make|succeed on) a dc (?<saveDc>\d+) (?<saveAbility>\w+) (?<saveText>saving throw|save)/i;
     static sensesDetails = /(?<name>\w+) (?<modifier>\d+)/idg;
     static skillDetails = /(?<name>\bacrobatics\b|\barcana\b|\banimal handling\b|\bathletics\b|\bdeception\b|\bhistory\b|\binsight\b|\bintimidation\b|\binvestigation\b|\bmedicine\b|\bnature\b|\bperception\b|\bperformance\b|\bpersuasion\b|\breligion\b|\bsleight of hand\b|\bstealth\b|\bsurvival\b) (?<modifier>[\+|-]\d+)/idg;
     static speedDetails = /(?<name>\w+)\s?(?<value>\d+)/idg;
-    static spellcastingDetails = /\((?<slots>\d+) slot|(?<perday>\d+)\/day|spellcasting ability is (?<ability1>\w+)|(?<ability2>\w+) as the spellcasting ability|spell save dc (?<savedc>\d+)/ig;
+    static spellcastingDetails = /\((?<slots>\d+) slot|(?<perDay>\d+)\/day|spellcasting ability is (?<ability1>\w+)|(?<ability2>\w+) as the spellcasting ability|spell save dc (?<saveDc>\d+)/ig;
 
     // The block title regex is complicated. Here's the breakdown...
     // ([A-Z][\w\d\-+,;']+[\s\-]?)               <- Represents the first word of the title, followed by a space or hyphen. It has to start with a capital letter.
@@ -61,9 +61,9 @@ export class sbiRegex {
     static abilityValues = /(?<base>\d+)\s?\((?<modifier>[\+\-−–]?\d+)\)/dg;
     static abilitySaves = /(?<name>\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b) (?<modifier>[\+|-]\d+)/ig;
     static actionCost = /\((costs )?(?<cost>\d+) action(s)?\)/i;
-    static attack = /\+(?<tohit>\d+) to hit/i;
+    static attack = /\+(?<toHit>\d+) to hit/i;
     static conditionTypes = /(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)/idg;
-    static damageRoll = /\(?(?<damageroll1>\d+(d\d+)?)(\s?\+\s?(?<damagemod1>\d+))?\)? (?<damagetype1>\w+)( damage)(.+(plus|and)\s+(\d+\s+\(*)?((?<damageroll2>\d+(d\d+)?)(\s?\+\s?(?<damagemod2>\d+))?)\)? (?<damagetype2>\w+)( damage))?/i;
+    static damageRoll = /\(?(?<damageRoll1>\d+(d\d+)?)(\s?\+\s?(?<damageMod1>\d+))?\)? (?<damageType1>\w+)( damage)(.+(plus|and)\s+(\d+\s+\(*)?((?<damageRoll2>\d+(d\d+)?)(\s?\+\s?(?<damageMod2>\d+))?)\)? (?<damageType2>\w+)( damage))?/i;
     static damageTypes = /(?<damageType>\bbludgeoning\b|\bpiercing\b|\bslashing\b|\bacid\b|\bcold\b|\bfire\b|\blightning\b|\bnecrotic\b|\bpoison\b|\bpsychic\b|\bradiant\b|\bthunder\b)/idg;
     static knownLanguages = /(?<language>\baarakocra\b|\babyssal\b|\baquan\b|\bauran\b|\bcelestial\b|\bcommon\b|\bdeep\b|\bdraconic\b|\bdruidic\b|\bdwarvish\b|\belvish\b|\bgiant\b|\bgith\b|\bgnoll\b|\bgnomish\b|\bgoblin\b|\bhalfling\b|\bignan\b|\binfernal\b|\borc\b|\bprimordial\b|\bsylvan\b|\bterran\b|\bcant\b|\bundercommon\b)/idg;
     static legendaryActionCount = /take (?<count>\d+) legendary/i;
@@ -71,11 +71,11 @@ export class sbiRegex {
     static spellcasterLevel = /(?<level>\d+)(.+)level spellcaster/i;
     static spellLine = /(at-will|cantrips|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)[\w\d\s\(\)-]*:/ig;
     static spellInnateLine = /at will:|\d\/day( each)?:/ig;
-    static spellInnateSingle = /innately cast (?<spellname>[\w|\s]+)(\s\(.+\))?,/i
+    static spellInnateSingle = /innately cast (?<spellName>[\w|\s]+)(\s\(.+\))?,/i
     static range = /range (?<near>\d+)(\/(?<far>\d+))? ?(f(ee|oo)?t|'|’)/i;
     static reach = /reach (?<reach>\d+) ?(f(ee|oo)?t|'|’)/i;
     static recharge = /\(recharge (?<recharge>\d+)([–|-]\d+)?\)/i;
-    static versatile = /\((?<damageroll>\d+d\d+( ?\+ ?\d+)?)\) (?<damagetype>\w+) damage if used with two hands/i;
+    static versatile = /\((?<damageRoll>\d+d\d+( ?\+ ?\d+)?)\) (?<damageType>\w+) damage if used with two hands/i;
     static target = /(?<range>\d+)?-(foot|ft?.|'|’) (?<shape>\w+)/i;
 
     // Store the regexs we use to determine line type and an identifier we can 

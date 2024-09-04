@@ -281,13 +281,13 @@ export class sbiActor {
             if (nameLower.startsWith("legendary resistance")) {
                 // Example:
                 // Legendary Resistance (3/day)
-                const resistanceCountRegex = /\((?<perday>\d+)\/day\)/i;
+                const resistanceCountRegex = /\((?<perDay>\d+)\/day\)/i;
                 const resistanceMatch = resistanceCountRegex.exec(name);
 
                 if (resistanceMatch) {
                     itemData.name = itemData.name.slice(0, resistanceMatch.index).trim();
-                    await actor.update(sUtils.assignToObject({}, "system.resources.legres.value", parseInt(resistanceMatch.groups.perday)));
-                    await actor.update(sUtils.assignToObject({}, "system.resources.legres.max", parseInt(resistanceMatch.groups.perday)));
+                    await actor.update(sUtils.assignToObject({}, "system.resources.legres.value", parseInt(resistanceMatch.groups.perDay)));
+                    await actor.update(sUtils.assignToObject({}, "system.resources.legres.max", parseInt(resistanceMatch.groups.perDay)));
                 }
 
                 sUtils.assignToObject(itemData, "system.activation.type", "special");
@@ -539,7 +539,7 @@ export class sbiActor {
                 const spellNames = spell.value;
                 const spellMatches = [...spellLevel.matchAll(sRegex.spellcastingDetails)];
                 const slots = this.getGroupValue("slots", spellMatches);
-                const perday = this.getGroupValue("perday", spellMatches);
+                const perDay = this.getGroupValue("perDay", spellMatches);
 
                 let spellType;
                 let spellCount;
@@ -547,9 +547,9 @@ export class sbiActor {
                 if (slots) {
                     spellType = "slots";
                     spellCount = parseInt(slots);
-                } else if (perday) {
+                } else if (perDay) {
                     spellType = "innate";
-                    spellCount = parseInt(perday);
+                    spellCount = parseInt(perDay);
                 } else if (spellLevel.includes("at will")) {
                     spellType = isSpellcasting ? "cantrip" : "at will";
                 }
@@ -573,15 +573,15 @@ export class sbiActor {
             var match = sRegex.spellInnateSingle.exec(description);
 
             if (match) {
-                const spell = await sUtils.getItemFromPacksAsync(match.groups.spellname, "spell");
+                const spell = await sUtils.getItemFromPacksAsync(match.groups.spellName, "spell");
 
                 if (spell) {
-                    const perday = this.getGroupValue("perday", [...itemData.name.matchAll(sRegex.spellcastingDetails)]);
+                    const perDay = this.getGroupValue("perDay", [...itemData.name.matchAll(sRegex.spellcastingDetails)]);
 
                     spellObjs.push({
                         "name": spell.name,
                         "type": "innate",
-                        "count": parseInt(perday)
+                        "count": parseInt(perDay)
                     });
                 }
             }
@@ -813,8 +813,8 @@ export class sbiActor {
 
             const savingThrowMatch = sRegex.savingThrowDetails.exec(description);
             if (savingThrowMatch) {
-                const dc = savingThrowMatch.groups.savedc;
-                const ability = savingThrowMatch.groups.saveability;
+                const dc = savingThrowMatch.groups.saveDc;
+                const ability = savingThrowMatch.groups.saveAbility;
 
                 sUtils.assignToObject(itemData, "system.save.ability", this.convertToShortAbility(ability));
                 sUtils.assignToObject(itemData, "system.save.dc", parseInt(dc));
@@ -830,7 +830,7 @@ export class sbiActor {
         const match = sRegex.perDayDetails.exec(text);
 
         if (match) {
-            const uses = match.groups.perday;
+            const uses = match.groups.perDay;
             sUtils.assignToObject(itemData, "system.uses.value", parseInt(uses));
             sUtils.assignToObject(itemData, "system.uses.max", uses);
             sUtils.assignToObject(itemData, "system.uses.per", "day");
@@ -904,12 +904,12 @@ export class sbiActor {
         const match = sRegex.damageRoll.exec(description);
 
         if (match) {
-            const damageRoll = match.groups.damageroll1;
-            const damageType = match.groups.damagetype1;
-            const hasDamageMod = match.groups.damagemod1 != undefined;
-            const plusDamageRoll = match.groups.damageroll2;
-            const plusDamageType = match.groups.damagetype2;
-            const plusHasDamageMod = match.groups.damagemod2 != undefined;
+            const damageRoll = match.groups.damageRoll1;
+            const damageType = match.groups.damageType1;
+            const hasDamageMod = match.groups.damageMod1 != undefined;
+            const plusDamageRoll = match.groups.damageRoll2;
+            const plusDamageType = match.groups.damageType2;
+            const plusHasDamageMod = match.groups.damageMod2 != undefined;
 
             // Set the damage rolls and types. I've never seen more that two damage rolls for one attack.
             const damageParts = [];
@@ -936,8 +936,8 @@ export class sbiActor {
             // If the ability for the damage hasn't been set, try to find the correct 
             // one to use so that it doesn't just default to Strength.
             if (!itemData.system.ability) {
-                if (match.groups.damagemod1) {
-                    const damageMod = parseInt(match.groups.damagemod1);
+                if (match.groups.damageMod1) {
+                    const damageMod = parseInt(match.groups.damageMod1);
 
                     if (damageMod === actor.system.abilities.str.mod) {
                         sUtils.assignToObject(itemData, "system.ability", "str");
@@ -959,7 +959,7 @@ export class sbiActor {
         const versatilematch = sRegex.versatile.exec(description);
 
         if (versatilematch) {
-            itemData.system.damage.versatile = versatilematch.groups.damageroll;
+            itemData.system.damage.versatile = versatilematch.groups.damageRoll;
 
             if (itemData.system.properties) {
                 itemData.system.properties.ver = true;
