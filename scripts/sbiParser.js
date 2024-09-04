@@ -536,8 +536,10 @@ export class sbiParser {
         const spellSentences = sUtils.makeSentences(spellLines);
         const sentences = notSpellSentences.concat(spellSentences);
 
-        for (const sentence of sentences) {
-            const titleMatch = sRegex.blockTitle.exec(sentence);
+        for (let s in sentences) {
+            let sentence = sentences[s];
+            // A title can't be the last sentence
+            const titleMatch = (s < sentences.length - 1) && sRegex.blockTitle.exec(sentence);
 
             if (titleMatch && !foundTitle) {
                 // Ignore two titles in a row because it means that the second one is just a short description and not a real title.
