@@ -114,7 +114,7 @@ export class sbiWindow extends Application {
 
             return { creature, statBlocks };
         } catch (error) {
-            if (true || sbiConfig.options.debug) {
+            if (sbiConfig.options.debug) {
                 throw(error);
             } else {
                 ui.notifications.error("5E STATBLOCK IMPORTER: An error has occured. Please report it using the module link so it can get fixed.");
