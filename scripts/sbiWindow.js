@@ -60,32 +60,11 @@ export class sbiWindow extends Application {
 
     static async parse() {
         if ($("#sbi-input").text().trim().length == 0) return;
-
-        const input = document.getElementById("sbi-input");
-
-        input.addEventListener("keydown", e => {
-            //override pressing enter in contenteditable
-            if (e.key == "Enter") {
-                //don't automatically put in divs
-                e.preventDefault();
-                e.stopPropagation();
-                //insert newline
-                this.insertTextAtSelection(input, "\n");
-            }
-        });
-        input.addEventListener("paste", e => {
-            //cancel paste
-            e.preventDefault();
-            //get plaintext from clipboard
-            let text = (e.originalEvent || e).clipboardData.getData('text/plain');
-            //insert text manually
-            this.insertTextAtSelection(input, text);
-        });
         
         const lines = $("#sbi-input")
             .text()
             .trim()
-            .split(/\n/g)
+            .split(/[\n\r]+/g)
             .filter(str => str.length); // remove empty lines
 
         try {
@@ -166,6 +145,27 @@ export class sbiWindow extends Application {
     activateListeners(html) {
         sbiUtils.log("Listeners activated")
         super.activateListeners(html);
+
+        const input = document.getElementById("sbi-input");
+
+        input.addEventListener("keydown", e => {
+            //override pressing enter in contenteditable
+            if (e.key == "Enter") {
+                //don't automatically put in divs
+                e.preventDefault();
+                e.stopPropagation();
+                //insert newline
+                sbiWindow.insertTextAtSelection(input, "\n");
+            }
+        });
+        input.addEventListener("paste", e => {
+            //cancel paste
+            e.preventDefault();
+            //get plaintext from clipboard
+            let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+            //insert text manually
+            sbiWindow.insertTextAtSelection(input, text);
+        });
 
         const folderSelect = $("#sbi-import-select")[0];
 
