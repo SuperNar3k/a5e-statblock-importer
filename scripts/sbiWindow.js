@@ -182,17 +182,13 @@ export class sbiWindow extends Application {
             folderSelect.add(new Option(folder.name));
         }
 
-        const parse = async () => {
-            const { creature, statBlocks } = await sbiWindow.parse();
-        };
-
         $("#sbi-input").on("blur input paste", async () => {
             if ($("#sbi-import-autoparse").prop("checked")) {
                 if (this.keyupParseTimeout) clearTimeout(this.keyupParseTimeout);
-                this.keyupParseTimeout = setTimeout(parse, 1000);
+                this.keyupParseTimeout = setTimeout(sbiWindow.parse, 1000);
             }
         });
-        $("#sbi-import-parse").on("click", parse);
+        $("#sbi-import-parse").on("click", sbiWindow.parse);
 
         const importButton = $("#sbi-import-button");
         importButton.on("click", async function () {
