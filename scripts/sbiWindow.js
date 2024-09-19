@@ -137,7 +137,7 @@ export class sbiWindow extends Application {
                 throw(error);
             } else {
                 ui.notifications.error("5E STATBLOCK IMPORTER: An error has occured. Please report it using the module link so it can get fixed.");
-                sbiUtils.log(`ERROR: ${error}`);
+                sbiUtils.log(`ERROR: ${error}`, true);
             }
         }
     }

@@ -2,8 +2,8 @@ import { sbiConfig } from "./sbiConfig.js";
 
 export class sbiUtils {
 
-    static log(message) {
-        if (sbiConfig.options.debug) {
+    static log(message, force = false) {
+        if (sbiConfig.options.debug || force) {
             console.log("5e Statblock Importer | " + message);
         }
     }
