@@ -65,7 +65,7 @@ export class sbiWindow extends Application {
             .text()
             .trim()
             .split(/[\n\r]+/g)
-            .filter(str => str.length); // remove empty lines
+            .filter(str => str.trim().length); // remove empty lines
 
         try {
             const { creature, statBlocks } = await sbiParser.parseInput(lines);
