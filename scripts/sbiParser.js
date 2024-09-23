@@ -245,6 +245,7 @@ export class sbiParser {
         const abilitiesMatchedData = [];
 
         const lines = fullLines.map(l => l.line);
+        console.log("5e Statblock Importer | DEBUG INFO: expand this:", fullLines);
         for (const l in lines) {
             const line = lines[l];
             const trimmedLine = line.trim();

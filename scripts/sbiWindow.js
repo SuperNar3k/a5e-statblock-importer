@@ -182,10 +182,10 @@ export class sbiWindow extends Application {
             folderSelect.add(new Option(folder.name));
         }
 
-        $("#sbi-input").on("blur input paste", async () => {
+        $("#sbi-input").on("blur input paste", async (e) => {
             if ($("#sbi-import-autoparse").prop("checked")) {
                 if (this.keyupParseTimeout) clearTimeout(this.keyupParseTimeout);
-                this.keyupParseTimeout = setTimeout(sbiWindow.parse, 1000);
+                this.keyupParseTimeout = setTimeout(sbiWindow.parse, e.type == "input" ? 1000 : 0);
             }
         });
         $("#sbi-import-parse").on("click", sbiWindow.parse);
