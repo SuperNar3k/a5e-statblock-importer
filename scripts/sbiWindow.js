@@ -38,24 +38,14 @@ export class sbiWindow extends Application {
         sbiWindow.sbiInputWindowInstance.render(true);
     }
 
-    static insertTextAtSelection(div, txt) {
-        //get selection area so we can position insert
-        let sel = window.getSelection();
-        let text = div.textContent;
-        let before = Math.min(sel.focusOffset, sel.anchorOffset);
-        let after = Math.max(sel.focusOffset, sel.anchorOffset);
-        //ensure string ends with \n so it displays properly
-        let afterStr = text.substring(after);
-        if (afterStr == "") afterStr = "\n";
-        //insert content
-        div.textContent = text.substring(0, before) + txt + afterStr;
-        //restore cursor at correct position
-        sel.removeAllRanges();
-        let range = document.createRange();
-        //childNodes[0] should be all the text
-        range.setStart(div.childNodes[0], before + txt.length);
-        range.setEnd(div.childNodes[0], before + txt.length);
-        sel.addRange(range);
+    static insertTextAtSelection(txt) {
+        const selectedRange = window.getSelection()?.getRangeAt(0);
+        if (!selectedRange || !txt) {
+            return;
+        }
+        selectedRange.deleteContents();
+        selectedRange.insertNode(document.createTextNode(txt));
+        selectedRange.setStart(selectedRange.endContainer, selectedRange.endOffset);
     }
 
     static async parse() {
@@ -119,12 +109,12 @@ export class sbiWindow extends Application {
             });
 
             const scrollTop = $("#sbi-input").scrollTop();
-            $("#sbi-input").html(`<span class="block-header" data-block="Name" contenteditable="false" readonly></span>`).append("\n");
+            $("#sbi-input").html(`<span class="block-header" data-block="Name" contenteditable="false" readonly></span>`);
             $("#sbi-input").append(`<span data-line="-1" data-block="name">` + creature.name + "</span>\n");
             let previousBlock = "";
             spanLines.forEach(l => {
                 if (l.attr("data-block") != previousBlock) {
-                    $("#sbi-input").append(`<span class="block-header" data-block="${BlockName[l.attr("data-block")] || "???"}" contenteditable="false" readonly></span>`).append("\n");
+                    $("#sbi-input").append(`<span class="block-header" data-block="${BlockName[l.attr("data-block")] || "???"}" contenteditable="false" readonly></span>`);
                     previousBlock = l.attr("data-block");
                 }
                 $("#sbi-input").append(l).append("\n");
@@ -149,14 +139,16 @@ export class sbiWindow extends Application {
         const input = document.getElementById("sbi-input");
 
         input.addEventListener("keydown", e => {
+            $("#sbi-input span.block-header").remove();
             //override pressing enter in contenteditable
             if (e.key == "Enter") {
                 //don't automatically put in divs
                 e.preventDefault();
                 e.stopPropagation();
                 //insert newline
-                sbiWindow.insertTextAtSelection(input, "\n");
+                sbiWindow.insertTextAtSelection("\n");
             }
+            input.dispatchEvent(new Event('input'));
         });
         input.addEventListener("paste", e => {
             //cancel paste
@@ -164,7 +156,7 @@ export class sbiWindow extends Application {
             //get plaintext from clipboard
             let text = (e.originalEvent || e).clipboardData.getData('text/plain');
             //insert text manually
-            sbiWindow.insertTextAtSelection(input, text);
+            sbiWindow.insertTextAtSelection(text);
         });
 
         const folderSelect = $("#sbi-import-select")[0];

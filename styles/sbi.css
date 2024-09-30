@@ -37,17 +37,16 @@
 }
 
 #sbi-input span {
-    display: inline-block;
     position: relative;
-    width: 100%;
 }
 
 #sbi-input span.block-header {
     font-size: smaller;
     font-weight: bold;
     border-top: 1px solid gray;
-    margin-top: 4px;
+    margin: 8px 0;
     opacity: 0.5;
+    display: block;
 }
 
 #sbi-input span.block-header:before {
