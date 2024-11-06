@@ -26,7 +26,11 @@
     "relationships": {
         "systems": [
             {
-                "id": "dnd5e"
+                "id": "dnd5e",
+                "type": "system",
+                "compatibility": {
+                    "maximum": "4.3.999"
+                }
             }
         ]
     },

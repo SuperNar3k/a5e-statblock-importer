@@ -67,6 +67,11 @@ export class sbiActor {
                 this.setTarget(description, itemData);
             }
 
+            if (game.system.version > "4" && !Object.keys(itemData.system.activities ?? {}).length) {
+                let activityId = foundry.utils.randomID();
+                sUtils.assignToObject(itemData, `system.activities.${activityId}`, {_id: activityId, type: "utility", activation: {type: "action", value: 1}});
+            }
+
             await this.setItemAsync(itemData, actor);
         }
     }
@@ -107,6 +112,14 @@ export class sbiActor {
                     // text. Because of that, we need to assign the type here instead of in the 'else' block below.
                     sUtils.assignToObject(itemData, "system.activation.type", "lair");
 
+                    if (game.system.version > "4") {
+                        let activityId = foundry.utils.randomID();
+                        sUtils.assignToObject(itemData, `system.activities.${activityId}`, {
+                            _id: activityId, type: "utility",
+                            activation: {type: "lair"}
+                        });
+                    }
+
                     // What iniative count does the lair action activate?
                     const lairInitiativeRegex = /initiative count (?<count>\d+)/i;
                     const lairInitiativeMatch = lairInitiativeRegex.exec(description);
@@ -146,6 +159,21 @@ export class sbiActor {
                 sUtils.assignToObject(itemData, "system.consume.amount", actionCost);
                 sUtils.assignToObject(itemData, "system.activation.cost", actionCost);
 
+                if (game.system.version > "4") {
+                    let activityId = foundry.utils.randomID();
+                    sUtils.assignToObject(itemData, `system.activities.${activityId}`, {
+                        _id: activityId, type: "utility",
+                        activation: {type: "legendary", value: actionCost},
+                        consumption: {
+                            targets: [{
+                                type: "attribute",
+                                target: "resources.legact.value",
+                                value: actionCost
+                            }]
+                        },
+                    });
+                }
+
                 await this.setItemAsync(itemData, actor);
             }
         }
@@ -177,6 +205,14 @@ export class sbiActor {
 
             sUtils.assignToObject(itemData, "flags.adnd5e.itemInfo.type", activationType);
             sUtils.assignToObject(itemData, "system.activation.type", activationType);
+
+            if (game.system.version > "4") {
+                let activityId = foundry.utils.randomID();
+                sUtils.assignToObject(itemData, `system.activities.${activityId}`, {
+                    _id: activityId, type: "utility",
+                    activation: {type: activationType}
+                });
+            }
 
             this.setPerDay(name, itemData);
             this.setRecharge(name, itemData);
@@ -294,10 +330,32 @@ export class sbiActor {
                 sUtils.assignToObject(itemData, "system.consume.type", "attribute");
                 sUtils.assignToObject(itemData, "system.consume.target", "resources.legres.value");
                 sUtils.assignToObject(itemData, "system.consume.amount", 1);
+
+                if (game.system.version > "4") {
+                    let activityId = foundry.utils.randomID();
+                    sUtils.assignToObject(itemData, `system.activities.${activityId}`, {
+                        _id: activityId, type: "utility",
+                        activation: {type: "special"},
+                        consumption: {
+                            targets: [{
+                                type: "attribute",
+                                target: "resources.legres.value",
+                                value: 1
+                            }]
+                        },
+                    });
+                }
             }
 
             this.setPerDay(name, itemData);
             if (itemData.system.uses?.value) {
+                if (game.system.version > "4") {
+                    let activityId = foundry.utils.randomID();
+                    sUtils.assignToObject(itemData, `system.activities.${activityId}`, {
+                        _id: activityId, type: "utility",
+                        activation: {type: "special"}
+                    });
+                }
                 sUtils.assignToObject(itemData, "system.activation.type", "special");
             }
 
@@ -789,6 +847,7 @@ export class sbiActor {
         let saveDescription = null;
         let attackMatch = null;
         const saveMatch = sRegex.savingThrowDetails.exec(description);
+        let attackActivityId, saveActivityId;
 
         if (saveMatch) {
             attackDescription = description.slice(0, saveMatch.index);
@@ -799,14 +858,29 @@ export class sbiActor {
             attackMatch = sRegex.attack.exec(attackDescription);
             if (attackMatch) {
                 itemData.type = "weapon";
-                sUtils.assignToObject(itemData, "system.weaponType", "natural");
-                sUtils.assignToObject(itemData, "system.ability", actor.system.abilities.str.mod > actor.system.abilities.dex.mod ? "str" : "dex");
+                if (game.system.version > "4") {
+                    attackActivityId = foundry.utils.randomID();
+                    sUtils.assignToObject(itemData, "system.type.value", "natural");
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}`, {
+                        _id: attackActivityId, type: "attack", activation: {type: "action", value: 1},
+                        attack: {ability: actor.system.abilities.str.mod > actor.system.abilities.dex.mod ? "str" : "dex"}
+                    });
+                } else {
+                    sUtils.assignToObject(itemData, "system.weaponType", "natural");
+                    sUtils.assignToObject(itemData, "system.ability", actor.system.abilities.str.mod > actor.system.abilities.dex.mod ? "str" : "dex");
+                }
 
-                this.setDamageRolls(attackDescription, itemData, actor)
+                this.setDamageRolls("attack", attackDescription, itemData, actor);
             }
         }
 
         if (saveDescription) {
+            saveActivityId = foundry.utils.randomID();
+
+            if (game.system.version > "4") {
+                sUtils.assignToObject(itemData, `system.activities.${saveActivityId}`, {_id: saveActivityId, type: "save", activation: {type: "action", value: 1}});
+            }
+
             if (!attackMatch) {
                 sUtils.assignToObject(itemData, "system.actionType", "save");
             }
@@ -816,11 +890,15 @@ export class sbiActor {
                 const dc = savingThrowMatch.groups.saveDc;
                 const ability = savingThrowMatch.groups.saveAbility;
 
-                sUtils.assignToObject(itemData, "system.save.ability", this.convertToShortAbility(ability));
-                sUtils.assignToObject(itemData, "system.save.dc", parseInt(dc));
-                sUtils.assignToObject(itemData, "system.save.scaling", "flat");
+                if (game.system.version > "4") {
+                    sUtils.assignToObject(itemData, `system.activities.${saveActivityId}.save`, {ability: this.convertToShortAbility(ability), dc: {formula: parseInt(dc)}});
+                } else {
+                    sUtils.assignToObject(itemData, "system.save.ability", this.convertToShortAbility(ability));
+                    sUtils.assignToObject(itemData, "system.save.dc", parseInt(dc));
+                    sUtils.assignToObject(itemData, "system.save.scaling", "flat");
+                }
 
-                this.setDamageRolls(saveDescription, itemData, actor)
+                this.setDamageRolls("save", saveDescription, itemData, actor);
             }
         }
     }
@@ -852,6 +930,12 @@ export class sbiActor {
 
             if (text.match(/spell attack/i)) {
                 sUtils.assignToObject(itemData, "system.actionType", "rsak");
+
+                if (game.system.version > "4") {
+                    let attackActivityId = Object.values(itemData.system.activities).find(a => a.type == "attack")._id;
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.type.classification`, "spell");
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.ability`, "");
+                }
             } else {
                 sUtils.assignToObject(itemData, "system.actionType", "rwak");
             }
@@ -865,6 +949,9 @@ export class sbiActor {
         if (match) {
             sUtils.assignToObject(itemData, "system.recharge.value", parseInt(match.groups.recharge));
             sUtils.assignToObject(itemData, "system.recharge.charged", true);
+            if (game.system.version > "4") {
+                sUtils.assignToObject(itemData, "system.uses", {max: 1, recovery: [{period: "recharge", formula: parseInt(match.groups.recharge)}]});
+            }
         }
     }
 
@@ -880,6 +967,12 @@ export class sbiActor {
 
             if (text.match(/spell attack/i)) {
                 sUtils.assignToObject(itemData, "system.actionType", "msak");
+
+                if (game.system.version > "4") {
+                    let attackActivityId = Object.values(itemData.system.activities).find(a => a.type == "attack")._id;
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.type.classification`, "spell");
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.ability`, "");
+                }
             } else {
                 sUtils.assignToObject(itemData, "system.actionType", "mwak");
             }
@@ -897,7 +990,7 @@ export class sbiActor {
         }
     }
 
-    static setDamageRolls(description, itemData, actor) {
+    static setDamageRolls(activity, description, itemData, actor) {
         // const regexQuery = sUtils.format(sbiRegex.damageRollsQuery, lookup);
         // const regex = new RegExp(regexQuery, "i");
         // const match = .exec(description);
@@ -911,7 +1004,7 @@ export class sbiActor {
             const plusDamageType = match.groups.damageType2;
             const plusHasDamageMod = match.groups.damageMod2 != undefined;
 
-            // Set the damage rolls and types. I've never seen more that two damage rolls for one attack.
+            // Set the damage rolls and types. I've never seen more than two damage rolls for one attack.
             const damageParts = [];
 
             if (damageRoll && damageType) {
@@ -922,6 +1015,29 @@ export class sbiActor {
             if (plusDamageRoll && plusDamageType) {
                 var modText = plusHasDamageMod ? " + @mod" : "";
                 damageParts.push([`${plusDamageRoll}${modText}`, plusDamageType]);
+            }
+
+            if (game.system.version > "4") {
+                let activityId = Object.values(itemData.system.activities).find(a => a.type == activity)._id;
+                let parts = [];
+                if (activity == "attack" && !hasDamageMod) {
+                    sUtils.assignToObject(itemData, `system.activities.${activityId}.damage.includeBase`, false);
+                }
+                if (activity == "save" || !hasDamageMod) {
+                    parts.push({
+                        number: parseInt(damageRoll.split("d")[0]),
+                        denomination: parseInt(damageRoll.split("d")[1]),
+                        types: [damageType]
+                    });
+                }
+                if (damageParts.length > 1) {
+                    parts.push({
+                        number: parseInt(plusDamageRoll.split("d")[0]),
+                        denomination: parseInt(plusDamageRoll.split("d")[1]),
+                        types: [plusDamageType]
+                    });
+                }
+                sUtils.assignToObject(itemData, `system.activities.${activityId}.damage.parts`, parts);
             }
 
             if (itemData.system.damage === undefined) {
@@ -954,6 +1070,14 @@ export class sbiActor {
                     }
                 }
             }
+        } else if (game.system.version > "4" && activity == "save" && itemData.system.damage) {
+            let activityId = Object.values(itemData.system.activities).find(a => a.type == "save")._id;
+            const baseDamage = {
+                number: itemData.system.damage.parts[0][0].split("d")[0],
+                denomination: itemData.system.damage.parts[0][0].split("d")[1],
+                types: [itemData.system.damage.parts[0][1]]
+            }
+            sUtils.assignToObject(itemData, `system.activities.${activityId}.damage.parts`, [baseDamage]);
         }
 
         const versatilematch = sRegex.versatile.exec(description);
