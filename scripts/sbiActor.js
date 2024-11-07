@@ -44,7 +44,6 @@ export class sbiActor {
             const itemData = {};
             itemData.name = sUtils.capitalizeAll(name);
             itemData.type = "feat";
-            itemData.img = await sUtils.getImgFromPackItemAsync(lowerName);
 
             sUtils.assignToObject(itemData, "system.description.value", description);
             sUtils.assignToObject(itemData, "system.activation.type", "action");
@@ -71,6 +70,14 @@ export class sbiActor {
                 let activityId = foundry.utils.randomID();
                 sUtils.assignToObject(itemData, `system.activities.${activityId}`, {_id: activityId, type: "utility", activation: {type: "action", value: 1}});
             }
+
+            // Remove Recharge information from the name
+            const rechargeMatch = sRegex.recharge.exec(name);
+            if (rechargeMatch) {
+                itemData.name = itemData.name.slice(0, rechargeMatch.index).trim();
+            }
+
+            itemData.img = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
 
             await this.setItemAsync(itemData, actor);
         }
@@ -138,8 +145,6 @@ export class sbiActor {
                     await actor.update(sUtils.assignToObject({}, "system.resources.legact.value", actionCount));
                     await actor.update(sUtils.assignToObject({}, "system.resources.legact.max", actionCount));
                 }
-
-                await this.setItemAsync(itemData, actor);
             } else {
                 itemData.name = actionName;
                 sUtils.assignToObject(itemData, "system.activation.type", activationType);
@@ -173,9 +178,10 @@ export class sbiActor {
                         },
                     });
                 }
-
-                await this.setItemAsync(itemData, actor);
             }
+            itemData.img = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
+
+            await this.setItemAsync(itemData, actor);
         }
     }
 
@@ -310,7 +316,6 @@ export class sbiActor {
 
             itemData.name = sUtils.capitalizeAll(name);
             itemData.type = "feat";
-            itemData.img = await sUtils.getImgFromPackItemAsync(nameLower);
 
             sUtils.assignToObject(itemData, "system.description.value", description);
 
@@ -347,6 +352,12 @@ export class sbiActor {
                 }
             }
 
+            // Remove Recharge information from the name
+            const rechargeMatch = sRegex.recharge.exec(name);
+            if (rechargeMatch) {
+                itemData.name = itemData.name.slice(0, rechargeMatch.index).trim();
+            }
+
             this.setPerDay(name, itemData);
             if (itemData.system.uses?.value) {
                 if (game.system.version > "4") {
@@ -358,6 +369,8 @@ export class sbiActor {
                 }
                 sUtils.assignToObject(itemData, "system.activation.type", "special");
             }
+
+            itemData.img = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
 
             await this.setItemAsync(itemData, actor);
         }
