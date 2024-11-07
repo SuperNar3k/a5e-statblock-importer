@@ -933,11 +933,18 @@ export class sbiActor {
 
                 if (game.system.version > "4") {
                     let attackActivityId = Object.values(itemData.system.activities).find(a => a.type == "attack")._id;
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.type.value`, "ranged");
                     sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.type.classification`, "spell");
-                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.ability`, "");
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.ability`, "spellcasting");
                 }
             } else {
                 sUtils.assignToObject(itemData, "system.actionType", "rwak");
+
+                if (game.system.version > "4") {
+                    let attackActivityId = Object.values(itemData.system.activities).find(a => a.type == "attack")._id;
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.type.value`, "ranged");
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.ability`, "");
+                }
             }
         }
     }
@@ -971,7 +978,7 @@ export class sbiActor {
                 if (game.system.version > "4") {
                     let attackActivityId = Object.values(itemData.system.activities).find(a => a.type == "attack")._id;
                     sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.type.classification`, "spell");
-                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.ability`, "");
+                    sUtils.assignToObject(itemData, `system.activities.${attackActivityId}.attack.ability`, "spellcasting");
                 }
             } else {
                 sUtils.assignToObject(itemData, "system.actionType", "mwak");
