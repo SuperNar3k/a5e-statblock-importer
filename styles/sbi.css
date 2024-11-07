@@ -28,7 +28,7 @@
     overflow: auto;
     border: 1px solid gray;
     padding: 4px 8px;
-    white-space: pre;
+    white-space: pre-wrap;
 }
 
 #sbi-input:empty:before {
