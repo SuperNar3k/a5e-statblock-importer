@@ -155,6 +155,8 @@ export class sbiWindow extends Application {
             e.preventDefault();
             //get plaintext from clipboard
             let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+            //remove unicode format control characters
+            text = text.replace(/\p{Cf}/gu, "");
             //insert text manually
             sbiWindow.insertTextAtSelection(text);
         });
