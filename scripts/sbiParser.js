@@ -181,16 +181,17 @@ export class sbiParser {
             for (const actionData of this.getBlockDatas(lines)) {
                 const nameLower = actionData.name.toLowerCase();
 
-                if (!["spellcasting", "innate spellcasting"].includes(nameLower)) {
+                // e.g. "Spellcasting", "Innate Spellcasting", "Innate Spellcasting (Psionics)"
+                if (!/^(innate )?spellcasting( \(\w+\))?$/i.exec(nameLower)) {
                     featureDatas.push(new NameValueData(actionData.name, actionData.value));
                 } else {
                     let spellInfo, spellRegex, spellcastingType;
-                    if (nameLower === "spellcasting") {
-                        spellRegex = sRegex.spellLine;
-                        spellcastingType = "spellcasting";
-                    } else {
+                    if (nameLower.includes("innate")) {
                         spellRegex = sRegex.spellInnateLine;
                         spellcastingType = "innateSpellcasting";
+                    } else {
+                        spellRegex = sRegex.spellLine;
+                        spellcastingType = "spellcasting";
                     }
                     spellInfo = this.getSpells(actionData.value, spellRegex);
                     creature[spellcastingType] = spellInfo;
