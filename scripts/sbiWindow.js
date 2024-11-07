@@ -51,8 +51,8 @@ export class sbiWindow extends Application {
     static async parse() {
         if ($("#sbi-input").text().trim().length == 0) return;
         
-        const lines = $("#sbi-input")
-            .text()
+        const lines = document.getElementById("sbi-input")
+            .innerText
             .trim()
             .split(/[\n\r]+/g)
             .filter(str => str.trim().length); // remove empty lines
