@@ -1100,10 +1100,12 @@ export class sbiActor {
             }
         } else if (game.system.version > "4" && activity == "save" && itemData.system.damage) {
             let activityId = Object.values(itemData.system.activities).find(a => a.type == "save")._id;
+            const damageRoll = itemData.system.damage.parts[0][0].replace("@mod", "").replace("+", "").trim();
+            const damageType = itemData.system.damage.parts[0][1];
             const baseDamage = {
-                number: itemData.system.damage.parts[0][0].split("d")[0],
-                denomination: itemData.system.damage.parts[0][0].split("d")[1],
-                types: [itemData.system.damage.parts[0][1]]
+                number: damageRoll.split("d")[0],
+                denomination: damageRoll.split("d")[1],
+                types: [damageType]
             }
             sUtils.assignToObject(itemData, `system.activities.${activityId}.damage.parts`, [baseDamage]);
         }
