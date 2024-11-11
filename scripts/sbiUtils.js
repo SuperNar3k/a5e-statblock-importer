@@ -95,8 +95,8 @@ export class sbiUtils {
 
     static async getItemFromPackAsync(pack, itemName) {
         let result = null;
-        const lowerName = itemName.toLowerCase();
-        const item = pack.index.find(e => lowerName === e.name.toLowerCase());
+        const normalizedName = itemName.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_");
+        const item = pack.index.find(e => normalizedName === e.name.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_"));
 
         if (item) {
             const itemDoc = await pack.getDocument(item._id);

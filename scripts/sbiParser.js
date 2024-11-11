@@ -185,15 +185,7 @@ export class sbiParser {
                 if (!/^(innate )?spellcasting( \(\w+\))?$/i.exec(nameLower)) {
                     featureDatas.push(new NameValueData(actionData.name, actionData.value));
                 } else {
-                    let spellInfo, spellRegex, spellcastingType;
-                    if (nameLower.includes("innate")) {
-                        spellRegex = sRegex.spellInnateLine;
-                        spellcastingType = "innateSpellcasting";
-                    } else {
-                        spellRegex = sRegex.spellLine;
-                        spellcastingType = "spellcasting";
-                    }
-                    spellInfo = this.getSpells(actionData.value, spellRegex);
+                    const { spellcastingType, spellInfo } = this.getSpells(actionData);
                     creature[spellcastingType] = spellInfo;
                     featureDatas.push(new NameValueData(sUtils.capitalizeAll(nameLower), spellInfo[0].value + "<br>" + spellInfo.slice(1).map(sl => sl.name + ": " + sl.value.join(", ")).join("<br>")));
                 }
@@ -205,7 +197,7 @@ export class sbiParser {
 
             // There should only be one block under the Utility Spells title.
             if (spellDatas.length === 1) {
-                let spellInfo = this.getSpells(spellDatas[0].value, sRegex.spellInnateLine);
+                let { spellInfo } = this.getSpells(spellDatas[0].value, sRegex.spellInnateLine);
                 creature.utilitySpells = spellInfo;
                 creature[BlockID.features].push(new NameValueData("Utility Spells", spellInfo[0].value + "<br>" + spellInfo.slice(1).map(sl => sl.name + ": " + sl.value.join(", ")).join("<br>")));
             }
@@ -214,7 +206,7 @@ export class sbiParser {
             let spellcastingOutsideFeatures = blockDatas.find(b => b.name.toLowerCase() == "spellcasting");
             if (spellcastingOutsideFeatures) {
                 blockDatas = blockDatas.filter(b => b.name !== spellcastingOutsideFeatures.name);
-                let spellInfo = this.getSpells(spellcastingOutsideFeatures.value, sRegex.spellInnateLine);
+                let { spellInfo } = this.getSpells(spellcastingOutsideFeatures.value, sRegex.spellInnateLine);
                 creature.innateSpellcasting = spellInfo;
                 blockDatas.push(new NameValueData(spellcastingOutsideFeatures.name, spellInfo[0].value + "<br>" + spellInfo.slice(1).map(sl => sl.name + ": " + sl.value.join(", ")).join("<br>")));
             }
@@ -619,20 +611,29 @@ export class sbiParser {
         return result;
     }
 
-    static getSpells(spellText, spellRegex) {
-        const spellMatches = [...spellText.matchAll(spellRegex)];
+    static getSpells(spellBlock) {
+        let spellRegex = sRegex.spellInnateLine;
+        let spellcastingType = "innateSpellcasting";
+        let spellMatches = [...spellBlock.value.matchAll(spellRegex)];
+
+        if (!spellMatches.length) {
+            spellRegex = sRegex.spellLine;
+            spellcastingType = "spellcasting";
+            spellMatches = [...spellBlock.value.matchAll(spellRegex)];
+        }
+
         const spellGroups = [];
 
         // Put spell groups on their own lines in the description so that it reads better.
         if (spellMatches.length) {
-            const introDescription = spellText.slice(0, spellMatches[0].index);
+            const introDescription = spellBlock.value.slice(0, spellMatches[0].index);
             spellGroups.push(new NameValueData("Description", introDescription));
 
             for (let idx = 0; idx < spellMatches.length; idx++) {
                 const match = spellMatches[idx];
                 let lastIndex = idx < spellMatches.length - 1 ? spellMatches[idx + 1].index : undefined;
 
-                const spellNames = spellText
+                const spellNames = spellBlock.value
                     .slice(match.index + match[0].length, lastIndex)
                     .split(/,(?![^\(]*\))/) // split on commas that are outside of parenthesis
                     .map(spell => spell.trim()) // remove spaces
@@ -644,7 +645,7 @@ export class sbiParser {
             }
         }
 
-        return spellGroups;
+        return { spellcastingType, spellInfo: spellGroups };
     }
 
     // ===============================
