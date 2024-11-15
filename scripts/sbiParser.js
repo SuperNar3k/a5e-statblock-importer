@@ -175,7 +175,7 @@ export class sbiParser {
 
         if (type === BlockID.villainActions) {
             creature[type] = this.getVillainActions(lines);
-        } else if (type === BlockID.features) {
+        } else if (type === BlockID.features || type === BlockID.traits) {
             const featureDatas = [];
             
             for (const actionData of this.getBlockDatas(lines)) {
