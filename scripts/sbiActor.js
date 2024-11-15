@@ -970,7 +970,7 @@ export class sbiActor {
             sUtils.assignToObject(itemData, "system.recharge.value", parseInt(match.groups.recharge));
             sUtils.assignToObject(itemData, "system.recharge.charged", true);
             if (game.system.version > "4") {
-                sUtils.assignToObject(itemData, "system.uses", {max: 1, recovery: [{period: "recharge", formula: parseInt(match.groups.recharge)}]});
+                sUtils.assignToObject(itemData, "system.uses", {max: "1", recovery: [{period: "recharge", formula: parseInt(match.groups.recharge)}]});
             }
         }
     }
