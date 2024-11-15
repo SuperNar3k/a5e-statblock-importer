@@ -60,6 +60,7 @@ export class sbiRegex {
     static abilityNames = /(?<abilityName>\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b)/idg;
     static abilityValues = /(?<base>\d+)\s?\((?<modifier>[\+\-−–]?\d+)\)/dg;
     static abilitySaves = /(?<name>\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b) (?<modifier>[\+|-]\d+)/ig;
+    static abilityValues24 = /(?<base>\d+)\s?(?<modifier>[\+\-−–]?\d+)\s?(?<saveModifier>[\+\-−–]?\d+)/dg;
     static actionCost = /\((costs )?(?<cost>\d+) action(s)?\)/i;
     static attack = /\+(?<toHit>\d+) to hit/i;
     static conditionTypes = /(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)/idg;

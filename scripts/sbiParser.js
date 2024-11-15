@@ -236,6 +236,7 @@ export class sbiParser {
         const foundAbilityNames = [];
         const foundAbilityValues = [];
         const abilitiesMatchedData = [];
+        const savingThrows24Data = [];
 
         const lines = fullLines.map(l => l.line);
         for (let l=0; l<lines.length; l++) {
@@ -265,6 +266,18 @@ export class sbiParser {
                 abilitiesMatchedData.push(...valueMatches.map(m => ({...m.indices.groups, line: fullLines[l].lineNumber})));
                 foundLines.push(line);
             }
+
+            // Look for ability and save values (2024 format), like 18 +4 +6
+            const valueMatches24 = [...trimmedLine.matchAll(sRegex.abilityValues24)];
+
+            if (valueMatches24.length) {
+                const values = valueMatches24.map(m => m.groups.base);
+                foundAbilityValues.push.apply(foundAbilityValues, values);
+                abilitiesMatchedData.push(...valueMatches24.map(m => ({...m.indices.groups, line: fullLines[l].lineNumber})));
+                foundLines.push(line);
+                // The 2024 format includes saving throws proficiencies here. We just check if the modifier is the same or not.
+                savingThrows24Data.push.apply(savingThrows24Data, valueMatches24.map(m => m.groups.modifier !== m.groups.saveModifier));
+            }
         }
 
         fullLines.matchData = abilitiesMatchedData;
@@ -272,6 +285,9 @@ export class sbiParser {
 
         for (let i = 0; i < foundAbilityNames.length; i++) {
             abilitiesData.push(new NameValueData(foundAbilityNames[i], parseInt(foundAbilityValues[i])));
+            if (savingThrows24Data[i]) {
+                creature.savingThrows.push(foundAbilityNames[i]);
+            }
         }
 
         creature.abilities = abilitiesData;
