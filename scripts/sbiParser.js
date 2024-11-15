@@ -191,7 +191,7 @@ export class sbiParser {
                 }
             }
 
-            creature[type] = featureDatas;
+            creature.features = featureDatas;
         } else if (type === BlockID.utilitySpells) {
             const spellDatas = this.getBlockDatas(lines);
 
