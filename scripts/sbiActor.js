@@ -859,7 +859,7 @@ export class sbiActor {
         let attackDescription = description;
         let saveDescription = null;
         let attackMatch = null;
-        const saveMatch = sRegex.savingThrowDetails.exec(description);
+        const saveMatch = sRegex.savingThrowDetails.exec(description) || sRegex.savingThrowDetails24.exec(description);
         let attackActivityId, saveActivityId;
 
         if (saveMatch) {
@@ -868,7 +868,7 @@ export class sbiActor {
         }
 
         if (attackDescription?.length) {
-            attackMatch = sRegex.attack.exec(attackDescription);
+            attackMatch = sRegex.attack.exec(attackDescription) || sRegex.attack24.exec(attackDescription);
             if (attackMatch) {
                 itemData.type = "weapon";
                 if (game.system.version > "4") {
@@ -898,7 +898,7 @@ export class sbiActor {
                 sUtils.assignToObject(itemData, "system.actionType", "save");
             }
 
-            const savingThrowMatch = sRegex.savingThrowDetails.exec(description);
+            const savingThrowMatch = sRegex.savingThrowDetails.exec(description) || sRegex.savingThrowDetails24.exec(description);
             if (savingThrowMatch) {
                 const dc = savingThrowMatch.groups.saveDc;
                 const ability = savingThrowMatch.groups.saveAbility;

@@ -6,7 +6,7 @@ export class sbiRegex {
     // that happens to start with same the word(s).
     static armor = /^((armor|armour) class|ac)\s\d+/i;
     static actions = /^actions$/i;
-    static abilities = /^(\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b|\bMod\s+Save\b)/i;
+    static abilities = /^(\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b|\bmod\s+save\b)/i;
     static bonusActions = /^bonus actions$/i;
     static challenge = /^(challenge|\bcr\b|challenge rating)\s\d+/i;
     static conditionImmunities = /^condition immunities\s/i;
@@ -40,7 +40,8 @@ export class sbiRegex {
     static rollDetails = /(?<value>\d+)\s?(\((?<formula>\d+d\d+(\s?[\+\-−–]\s?\d+)?)\))?/id;
     static perDayDetails = /(?<perDay>\d+)\/day/i;
     static roleDetails = /\d+\s(?<role>\w+)/i;
-    static savingThrowDetails = /must (make|succeed on) a dc (?<saveDc>\d+) (?<saveAbility>\w+) (?<saveText>saving throw|save)|(?<saveAbility>\w+) (?<saveText>saving throw):\s*dc (?<saveDc>\d+)/i;
+    static savingThrowDetails = /must (make|succeed on) a dc (?<saveDc>\d+) (?<saveAbility>\w+) (?<saveText>saving throw|save)/i;
+    static savingThrowDetails24 = /(?<saveAbility>\w+) (?<saveText>saving throw):\s*dc (?<saveDc>\d+)/i;
     static sensesDetails = /(?<name>\w+) (?<modifier>\d+)/idg;
     static skillDetails = /(?<name>\bacrobatics\b|\barcana\b|\banimal handling\b|\bathletics\b|\bdeception\b|\bhistory\b|\binsight\b|\bintimidation\b|\binvestigation\b|\bmedicine\b|\bnature\b|\bperception\b|\bperformance\b|\bpersuasion\b|\breligion\b|\bsleight of hand\b|\bstealth\b|\bsurvival\b) (?<modifier>[\+|-]\d+)/idg;
     static speedDetails = /(?<name>\w+)\s?(?<value>\d+)/idg;
@@ -62,7 +63,8 @@ export class sbiRegex {
     static abilitySaves = /(?<name>\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b) (?<modifier>[\+|-]\d+)/ig;
     static abilityValues24 = /(?<base>\d+)\s?(?<modifier>[\+\-−–]?\d+)\s?(?<saveModifier>[\+\-−–]?\d+)/dg;
     static actionCost = /\((costs )?(?<cost>\d+) action(s)?\)/i;
-    static attack = /\+(?<toHit>\d+) to hit|attack\sroll:\s*\+(?<toHit>\d+)/i;
+    static attack = /\+(?<toHit>\d+) to hit/i;
+    static attack24 = /attack\sroll:\s*\+(?<toHit>\d+)/i;
     static conditionTypes = /(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)/idg;
     static damageRoll = /\(?(?<damageRoll1>\d+(d\d+)?)(\s?\+\s?(?<damageMod1>\d+))?\)? (?<damageType1>\w+)( damage)(.+(plus|and)\s+(\d+\s+\(*)?((?<damageRoll2>\d+(d\d+)?)(\s?\+\s?(?<damageMod2>\d+))?)\)? (?<damageType2>\w+)( damage))?/i;
     static damageTypes = /(?<damageType>\bbludgeoning\b|\bpiercing\b|\bslashing\b|\bacid\b|\bcold\b|\bfire\b|\blightning\b|\bnecrotic\b|\bpoison\b|\bpsychic\b|\bradiant\b|\bthunder\b)/idg;
