@@ -696,6 +696,17 @@ export class sbiActor {
                         sUtils.assignToObject(spell, "system.uses.max", spellObj.count);
                         sUtils.assignToObject(spell, "system.uses.per", "day");
                         sUtils.assignToObject(spell, "system.preparation.mode", "innate");
+                        if (game.system.version > "4") {
+                            let mainSpellActivityId = Object.values(spell.system.activities || {})[0]._id;
+                            sUtils.assignToObject(spell, `system.activities.${mainSpellActivityId}.consumption.targets`, [{
+                                type: "itemUses",
+                                value: 1
+                            }]);
+                            sUtils.assignToObject(spell, `system.uses.recovery`, [{
+                                period: "day",
+                                type: "recoverAll"
+                            }]);
+                        }
                     } else {
                         sUtils.assignToObject(spell, "system.preparation.mode", "atwill");
                     }
