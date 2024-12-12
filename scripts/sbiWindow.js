@@ -97,13 +97,8 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         const input = document.getElementById("sbi-input");
 
         if (input.innerText.trim().length == 0) return;
-        
-        const lines = input
-            .innerText
-            .trim()
-            .split(/[\n\r]+/g)
-            .map(str => str.trim().replace(/\s+/g, " ")) // trim and remove double spaces
-            .filter(str => str.length); // remove empty lines
+
+        const lines = sbiUtils.stripMarkdownAndCleanInput(input.innerText).split("\n");
 
         try {
             const { actor, statBlocks, unknownLines } = sbiParser.parseInput(lines);
