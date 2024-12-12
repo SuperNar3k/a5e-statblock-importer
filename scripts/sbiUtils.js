@@ -1,4 +1,4 @@
-import { sbiConfig } from "./sbiConfig.js";
+import { sbiConfig, getPacks } from "./sbiConfig.js";
 
 export class sbiUtils {
 
@@ -8,33 +8,95 @@ export class sbiUtils {
         }
     }
 
-    // ==========================
-    // Object Functions    
-    // ==========================
+    static getAbilityMod(abilityValue) {
+        return Math.floor((abilityValue - 10) / 2);
+    }
 
-    static assignToObject(obj, path, val) {
-        const pathArr = path.split(".");
+    static getProficiencyBonus(level) {
+        return 2 + Math.floor((level - 1) / 4);
+    }
 
-        let length = pathArr.length;
-        let current = obj;
+    static convertToShortAbility(abilityName) {
+        const ability = abilityName.toLowerCase();
 
-        for (let i = 0; i < pathArr.length; i++) {
-            const key = pathArr[i];
+        switch (ability) {
+            case "strength":
+                return "str";
+            case "dexterity":
+                return "dex";
+            case "constitution":
+                return "con";
+            case "intelligence":
+                return "int";
+            case "wisdom":
+                return "wis";
+            case "charisma":
+                return "cha";
+            default:
+                return ability;
+        }
+    }
 
-            // If this is the last item in the loop, assign the value
-            if (i === length - 1) {
-                current[key] = val;
-            } else {
-                // If the key doesn't exist, create it
-                if (!current[key]) {
-                    current[key] = {};
-                }
+    static convertLanguage(language) {
+        let result = language.toLowerCase();
 
-                current = current[key];
-            }
+        switch (result) {
+            case "deep speech":
+                result = "deep";
+                break;
+            case "thieves' cant":
+                result = "cant";
+                break;
+            default:
+                break;
         }
 
-        return obj;
+        return result;
+    }
+
+    static convertToShortSkill(skillName) {
+        const skill = skillName.toLowerCase();
+
+        switch (skill) {
+            case "acrobatics":
+                return "acr";
+            case "animal handling":
+                return "ani";
+            case "arcana":
+                return "arc";
+            case "athletics":
+                return "ath";
+            case "deception":
+                return "dec";
+            case "history":
+                return "his";
+            case "insight":
+                return "ins";
+            case "intimidation":
+                return "itm";
+            case "investigation":
+                return "inv";
+            case "medicine":
+                return "med";
+            case "nature":
+                return "nat";
+            case "perception":
+                return "prc";
+            case "performance":
+                return "prf";
+            case "persuasion":
+                return "per";
+            case "religion":
+                return "rel";
+            case "sleight of hand":
+                return "slt";
+            case "stealth":
+                return "ste";
+            case "survival":
+                return "sur";
+            default:
+                return skill;
+        }
     }
 
     // Search all compendiums and get just the icon from the item, if found.
@@ -50,43 +112,16 @@ export class sbiUtils {
         return result;
     }
 
-    static dndPacks = null;
-    static otherPacks = null;
-
     static async getItemFromPacksAsync(itemName, type) {
         let result = null;
 
-        // Create pack arrays once to save time.
-        if (this.dndPacks == null && this.otherPacks == null) {
-            // Look through the non-default packs first, since those are more
-            // likely to contain customized versions of the dnd5e items.
-            this.dndPacks = [];
-            this.otherPacks = [];
+        const packs = getPacks()[type === "spell" ? "spells" : "items"].filter(p => p.active);
 
-            for (const pack of game.packs) {
-                if (pack.metadata.id.startsWith("dnd5e")) {
-                    this.dndPacks.push(pack);
-                } else {
-                    this.otherPacks.push(pack);
-                }
-            }
-        }
-
-        for (const pack of this.otherPacks) {
-            result = await this.getItemFromPackAsync(pack, itemName);
+        for (const pack of packs) {
+            result = await this.getItemFromPackAsync(game.packs.get(pack.collection), itemName);
 
             if (result && (!type || result.type === type)) {
                 break;
-            }
-        }
-
-        if (result == null) {
-            for (const pack of this.dndPacks) {
-                result = await this.getItemFromPackAsync(pack, itemName);
-
-                if (result && (!type || result.type === type)) {
-                    break;
-                }
             }
         }
 
@@ -184,7 +219,49 @@ export class sbiUtils {
     }
 
     // Given an array of strings, returns an array of strings, each representing one sentence.
-    static makeSentences(strings) {
+    // I'm trying to find a way to NOT have to do this at all
+    static makeSentences(lines) {
+        let sentences = [];
+        let newSentence = "";
+        let sourceStart = {lineNumber: null, index: 0};
+        let sourceEnd = {lineNumber: null, index: 0};
+        for (let {lineNumber, line} of lines) {
+            sourceStart.lineNumber ||= lineNumber;
+            sourceEnd.lineNumber = lineNumber;
+            sourceEnd.index = 0;
+            if (newSentence) newSentence += " ";
+            // Split on "." or "!", except for "ft."
+            const parts = line.split(/(?<!ft)[.!]/);
+            for (let p=0; p<parts.length; p++) {
+                newSentence += parts[p];
+                sourceEnd.index += parts[p].length;
+                if (p < parts.length - 1) {
+                    sentences.push({line: newSentence, sourceStart: foundry.utils.deepClone(sourceStart), sourceEnd: foundry.utils.deepClone(sourceEnd)});
+                    newSentence = "";
+                    sourceStart.lineNumber = lineNumber;
+                    sourceEnd.lineNumber = lineNumber;
+                    sourceStart.index = sourceEnd.index + 1;
+                }
+            }
+        }
+        if (newSentence) sentences.push({line: newSentence, sourceStart: foundry.utils.deepClone(sourceStart), sourceEnd: foundry.utils.deepClone(sourceEnd)});
+
+        sentences.forEach(s => {
+            if (s.line.startsWith(" ")) {
+                s.line = s.line.slice(1);
+                s.sourceStart.index++;
+            }
+            if (s.line.endsWith(" ")) {
+                s.line = s.line.slice(-1);
+                s.sourceEnd.index--;
+            }
+            s.line += ".";
+        });
+        return sentences;
+    }
+
+    // Given an array of strings, returns an array of strings, each representing one sentence.
+    static makeSentencesOld(strings) {
         return this.combineToString(strings)
             .split(/[.!]/)
             .filter(str => str)
@@ -194,9 +271,18 @@ export class sbiUtils {
     // Given an array of strings, returns one string.
     static combineToString(strings) {
         return strings
-            .join(" ")
-            .replace("  ", " ")
-            .replace("- ", "-");
+            .join("\n");
+            //.replace("- ", "-");
+    }
+
+    // Given an array of source lines, combine their text and remove the action/feature name from the start
+    static combineSourceLines(lines, removeName = true) {
+        let combined = this.combineToString(lines.map(l => l.line))
+            .replace("\n", " ");
+        if (removeName) {
+            combined = combined.replace(/^[^.]*\.\s*/i, "");
+        }
+        return combined;
     }
 
     // ==========================

@@ -1,145 +1,50 @@
 import { sbiUtils } from "./sbiUtils.js";
 import { sbiParser } from "./sbiParser.js";
-import { sbiConfig } from "./sbiConfig.js";
-import { sbiActor as sActor } from "./sbiActor.js";
-import { BlockName } from "./sbiData.js";
+import { sbiConfig, MODULE_NAME } from "./sbiConfig.js";
+import { Blocks } from "./sbiData.js";
 
-export class sbiWindow extends Application {
+const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
     constructor(options) {
         super(options);
         this.keyupParseTimeout = null;
     }
 
-    static get defaultOptions() {
-        const options = super.defaultOptions;
-        options.id = "sbi-window";
-        options.template = "modules/5e-statblock-importer/templates/sbiWindow.hbs";
-        options.width = 800;
-        options.resizable = true;
-        options.classes = ["sbi-window"];
-        options.popup = true;
-        options.title = "5e Statblock Importer";
+    static DEFAULT_OPTIONS = {
+        id: "sbi-window",
+        position: { width: 800 },
+        classes: ["sbi-window"],
+        window: {
+            resizable: true,
+            title: "5e Statblock Importer"
+        },
+        actions: {
+            parse: sbiWindow.parse,
+            import: sbiWindow.import
+        }
+    };
 
-        return options;
-    }
+    static PARTS = {
+        form: {
+            template: `modules/${MODULE_NAME}/templates/sbiWindow.hbs`
+        }
+    };
 
-    getData() {
-        return {
-            blocks: BlockName,
-            testSelected: "abilities"
-        };
-    }
-
-    static sbiInputWindowInstance = {}
+    static sbiInputWindowInstance = {};
 
     static async renderWindow() {
         sbiWindow.sbiInputWindowInstance = new sbiWindow();
         sbiWindow.sbiInputWindowInstance.render(true);
     }
 
-    static insertTextAtSelection(txt) {
-        const selectedRange = window.getSelection()?.getRangeAt(0);
-        if (!selectedRange || !txt) {
-            return;
-        }
-        selectedRange.deleteContents();
-        selectedRange.insertNode(document.createTextNode(txt));
-        selectedRange.setStart(selectedRange.endContainer, selectedRange.endOffset);
-    }
-
-    static async parse() {
-        if ($("#sbi-input").text().trim().length == 0) return;
-        
-        const lines = document.getElementById("sbi-input")
-            .innerText
-            .trim()
-            .split(/[\n\r]+/g)
-            .filter(str => str.trim().length); // remove empty lines
-
-        try {
-            const { creature, statBlocks } = await sbiParser.parseInput(lines);
-
-            // This is where we retrieve the regex match indices and map them to parts of our lines to create spans
-            [...statBlocks.entries()].forEach(([key, value]) => {
-                let matchData = value.matchData;
-                if (matchData) {
-                    if (!Array.isArray(matchData)) {
-                        matchData = [matchData];
-                    }
-                    // We loop through the matches starting from the last one
-                    for (let md=matchData.length-1; md>=0; md--) {
-                        const matchDataObject = matchData[md];
-                        const specificLine = matchDataObject.line;
-                        // We filter out any entry without a valid array of two indices, and we sort last match first
-                        const orderedMatches = Object.entries(matchDataObject).filter(e => e[1]?.length == 2).sort((a, b) => b[1][0] - a[1][0]).map(m => ({label: m[0], indices: m[1]}));
-
-                        for (let m=0; m<orderedMatches.length; m++) {
-                            // For each match, we go line by line (keeping track of the total length) until we find the applicable line. If a specificLine is set, we'll get that one.
-                            let length = 0;
-                            for (let l=0; l<value.length; l++) {
-                                let line = value[l].line;
-                                let lineNumber = value[l].lineNumber;
-                                if (
-                                    (specificLine === lineNumber) ||
-                                    (typeof specificLine === "undefined" && orderedMatches[m].indices[0] >= length && orderedMatches[m].indices[1] >= length && orderedMatches[m].indices[0] <= length + line.length && orderedMatches[m].indices[1] <= length + line.length)
-                                ) {
-                                    // We surround the matched part with a <span>
-                                    const previousLinesLength = typeof specificLine === "undefined" ? length : 0;
-                                    lines[lineNumber] = [lines[lineNumber].slice(0, orderedMatches[m].indices[1] - previousLinesLength), "</span>", lines[lineNumber].slice(orderedMatches[m].indices[1] - previousLinesLength)].join("");
-                                    lines[lineNumber] = [
-                                        lines[lineNumber].slice(0, orderedMatches[m].indices[0] - previousLinesLength),
-                                        `<span class="matched" data-tooltip="${BlockName[key] + ": " + sbiUtils.camelToTitleUpperIfTwoLetters(orderedMatches[m].label)}">`,
-                                        lines[lineNumber].slice(orderedMatches[m].indices[0] - previousLinesLength)
-                                    ].join("").trim();
-                                }
-                                length += line.length + 1;
-                            }
-                        }
-                    }
-                }
-            });
-
-            let spanLines = lines.map((line, i) => {
-                const block = [...statBlocks.entries()].find(e => e[1].some(l => l.lineNumber == i))?.[0];
-                return $("<span>")
-                    .attr("data-line", i)
-                    .attr("data-block", block)
-                    .html(line);
-            });
-
-            const scrollTop = $("#sbi-input").scrollTop();
-            $("#sbi-input").html(`<span class="block-header" data-block="Name" contenteditable="false" readonly></span>`);
-            $("#sbi-input").append(`<span data-line="-1" data-block="name">` + creature.name + "</span>\n");
-            let previousBlock = "";
-            spanLines.forEach(l => {
-                if (l.attr("data-block") != previousBlock) {
-                    $("#sbi-input").append(`<span class="block-header" data-block="${BlockName[l.attr("data-block")] || "???"}" contenteditable="false" readonly></span>`);
-                    previousBlock = l.attr("data-block");
-                }
-                $("#sbi-input").append(l).append("\n");
-            });
-            $("#sbi-input").scrollTop(scrollTop);
-
-            return { creature, statBlocks };
-        } catch (error) {
-            if (sbiConfig.options.debug) {
-                throw(error);
-            } else {
-                ui.notifications.error("5E STATBLOCK IMPORTER: An error has occured. Please report it using the module link so it can get fixed.");
-                sbiUtils.log(`ERROR: ${error}`, true);
-            }
-        }
-    }
-
-    activateListeners(html) {
-        sbiUtils.log("Listeners activated")
-        super.activateListeners(html);
-
+    _onRender(context, options) {
         const input = document.getElementById("sbi-input");
 
         input.addEventListener("keydown", e => {
-            $("#sbi-input span.block-header").remove();
+            [...this.element.querySelectorAll("#sbi-input span.block-header")].forEach(s => s.remove());
+            
             //override pressing enter in contenteditable
             if (e.key == "Enter") {
                 //don't automatically put in divs
@@ -150,22 +55,22 @@ export class sbiWindow extends Application {
             }
             input.dispatchEvent(new Event('input'));
         });
+
         input.addEventListener("paste", e => {
             //cancel paste
             e.preventDefault();
             //get plaintext from clipboard
-            let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+            let text = (e.originalEvent || e).clipboardData.getData("text/plain");
             //remove unicode format control characters
             text = text.replace(/\p{Cf}/gu, "");
             //insert text manually
             sbiWindow.insertTextAtSelection(text);
         });
 
-        const folderSelect = $("#sbi-import-select")[0];
+        const folderSelect = document.getElementById("sbi-import-select");
 
         // Add a default option.
-        const noneFolder = "None";
-        folderSelect.add(new Option(noneFolder));
+        folderSelect.add(new Option("None"));
 
         var actorFolders = [...game.folders]
             .filter(f => f.type === "Actor")
@@ -176,39 +81,134 @@ export class sbiWindow extends Application {
             folderSelect.add(new Option(folder.name));
         }
 
-        $("#sbi-input").on("blur input paste", async (e) => {
-            if ($("#sbi-import-autoparse").prop("checked")) {
-                if (this.keyupParseTimeout) clearTimeout(this.keyupParseTimeout);
-                this.keyupParseTimeout = setTimeout(sbiWindow.parse, e.type == "input" ? 1000 : 0);
-            }
-        });
-        $("#sbi-import-parse").on("click", sbiWindow.parse);
-
-        const importButton = $("#sbi-import-button");
-        importButton.on("click", async function () {
-            sbiUtils.log("Clicked import button");
-            const selectedFolderName = folderSelect.options[folderSelect.selectedIndex].text;
-            const selectedFolder = selectedFolderName == noneFolder ? null : actorFolders.find(f => f.name === selectedFolderName);
-            const { creature } = await sbiWindow.parse();
-            if (creature) {
-                const actor = await sActor.convertCreatureToActorAsync(creature, selectedFolder?.id);
-                // Open the sheet.
-                actor.sheet.render(true);
-            }
+        ["blur", "input", "paste"].forEach(eventType => {
+            input.addEventListener(eventType, (e) => {
+                if (document.getElementById("sbi-import-autoparse").checked) {
+                    if (this.keyupParseTimeout) clearTimeout(this.keyupParseTimeout);
+                    this.keyupParseTimeout = setTimeout(sbiWindow.parse, e.type == "input" ? 1000 : 0);
+                }
+            });
         });
 
         // ###############################
         // DEBUG
         // ###############################
-        if (sbiConfig.options.debug && sbiConfig.options.autoDebug) {
-            const lines = sbiConfig.options.testBlock
-                .trim()
-                .split(/\n/g)
-                .filter(str => str.length); // remove empty lines
+        //if (sbiConfig.options.debug && sbiConfig.options.autoDebug) {
+        //    const lines = sbiConfig.options.testBlock
+        //        .trim()
+        //        .split(/\n/g)
+        //        .filter(str => str.length); // remove empty lines
+        //
+        //    sbiParser.parseInput(lines)
+        //        .then(parseResult => { return sActor.convertCreatureToActorAsync(parseResult.creature, null); })
+        //        .then(actor => { actor.sheet.render(true); });
+        //}
 
-            sbiParser.parseInput(lines)
-                .then(parseResult => { return sActor.convertCreatureToActorAsync(parseResult.creature, null); })
-                .then(actor => { actor.sheet.render(true); });
+        sbiUtils.log("Listeners activated");
+    }
+
+    static parse() {
+        const input = document.getElementById("sbi-input");
+
+        if (input.innerText.trim().length == 0) return;
+        
+        const lines = input
+            .innerText
+            .trim()
+            .split(/[\n\r]+/g)
+            .map(str => str.trim().replace(/\s+/g, " ")) // trim and remove double spaces
+            .filter(str => str.length); // remove empty lines
+
+        try {
+            const { actor, statBlocks } = sbiParser.parseInput(lines);
+            
+            // Each line will be its own span, with data attributes indicating their block
+            let spanLines = lines.map((line, i) => {
+                const block = [...statBlocks.entries()].find(e => e[1].some(l => l.lineNumber == i))?.[0];
+                const spanLine = document.createElement("span");
+                spanLine.setAttribute("data-line", i);
+                spanLine.setAttribute("data-block", block);
+
+                // If the line has matched data, we also surround each matched part with a span
+                const matchData = statBlocks.get(block).find(l => l.lineNumber == i).matchData || [];
+                matchData.sort((a, b) => a.indices[0] - b.indices[0]);
+
+                let encompassingEndDoneIndex = -1;
+                for (let md = matchData.length - 1; md >= 0; md--) {
+                    const spanStart = matchData[md].indices[0];
+                    const spanEnd = matchData[md].indices[1];
+
+                    // We check if this match is inside the "previous" one, like "Acid Breath (Recharge 5-6)" where recharge match is inside title match.
+                    // We only manage one level of nesting, it should be enough.
+                    // ACTUALLY, not really doing this anymore since I changed the block title regex to exclude per day, etc from the title.
+                    if (md > 0 && matchData[md - 1].indices[1] > spanEnd) {
+                        // The "previous" span encompasses this one, we insert the parent span end first and mark it as done
+                        line = [line.slice(0, matchData[md - 1].indices[1]), "</span>", line.slice(matchData[md - 1].indices[1])].join("");
+                        encompassingEndDoneIndex = md - 1;
+                    }
+                    // We only add the span end if it's not been done already
+                    if (encompassingEndDoneIndex !== md) {
+                        line = [line.slice(0, spanEnd), "</span>", line.slice(spanEnd)].join("");
+                    }
+                    line = [
+                        line.slice(0, spanStart),
+                        `<span class="matched" data-tooltip="${Blocks[block].name + ": " + sbiUtils.camelToTitleUpperIfTwoLetters(matchData[md].label)}">`,
+                        line.slice(spanStart)
+                    ].join("").trim();
+                }
+
+                spanLine.innerHTML = line;
+                return spanLine;
+            });
+
+            // Insert the span lines, with headers for each block
+            const scrollTop = input.scrollTop;
+            input.innerHTML = `<span class="block-header" data-block="Name" contenteditable="false" readonly></span>`;
+            input.innerHTML += `<span data-line="-1" data-block="name">` + actor.name + "</span>\n";
+            let previousBlock = "";
+            spanLines.forEach(l => {
+                if (l.getAttribute("data-block") != previousBlock) {
+                    input.innerHTML += `<span class="block-header" data-block="${Blocks[l.getAttribute("data-block")]?.name || "???"}" contenteditable="false" readonly></span>`
+                    previousBlock = l.getAttribute("data-block");
+                }
+                input.appendChild(l);
+                input.innerHTML += "\n";
+            });
+            input.scrollTop = scrollTop;
+console.log(actor, statBlocks);
+            return { actor, statBlocks };
+            
+        } catch (error) {
+            if (true || sbiConfig.options.debug) {
+                throw error;
+            } else {
+                ui.notifications.error("5E STATBLOCK IMPORTER: An error has occured. Please report it using the module link so it can get fixed.");
+                sbiUtils.log(`ERROR: ${error}`, true);
+            }
         }
+    }
+
+    static async import() {
+        sbiUtils.log("Clicked import button");
+        const folderSelect = document.getElementById("sbi-import-select");
+        const selectedFolderName = folderSelect.options[folderSelect.selectedIndex].text;
+        const selectedFolder = selectedFolderName == "None" ? null : actorFolders.find(f => f.name === selectedFolderName);
+        const { actor } = await sbiWindow.parse();
+        if (actor) {
+            const actor5e = await actor.createActor5e(selectedFolder?.id);
+            //console.log(actor5e);
+            // Open the sheet.
+            actor5e.sheet.render(true);
+        }
+    }
+
+    static insertTextAtSelection(txt) {
+        const selectedRange = window.getSelection()?.getRangeAt(0);
+        if (!selectedRange || !txt) {
+            return;
+        }
+        selectedRange.deleteContents();
+        selectedRange.insertNode(document.createTextNode(txt));
+        selectedRange.setStart(selectedRange.endContainer, selectedRange.endOffset);
     }
 }

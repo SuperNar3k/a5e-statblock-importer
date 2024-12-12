@@ -4,7 +4,7 @@
             <label for="sbi-import-autoparse">Auto parse:
                 <input id="sbi-import-autoparse" type="checkbox" checked="checked" />
             </label>
-            <button id="sbi-import-parse" type="button">Parse</button>
+            <button id="sbi-import-parse" type="button" data-action="parse">Parse</button>
         </div>
     </section>
     <div id="sbi-input" contenteditable="true" data-placeholder="Usage:
@@ -15,6 +15,6 @@ Report any bugs using the module link, and add the statblock you were trying to 
     <section id="sbi-bottom">
         <span id="sbi-import-text">Folder to import to:</span>
         <select id="sbi-import-select"></select>
-        <button id="sbi-import-button" type="button">Import</button>
+        <button id="sbi-import-button" type="button" data-action="import">Import</button>
     </section>
 </form>

@@ -86,3 +86,16 @@
     border-style: solid;
     border-color: transparent black transparent transparent;
 }
+
+#sbi-compendium-options-menu {
+    .container {
+        display: flex;
+    }
+    footer {
+        display: flex;
+    }
+}
+
+#sbi-compendium-options-menu .form-group label:hover {
+    cursor: move;
+}
