@@ -49,7 +49,7 @@ export function getPacks() {
                 active = game.settings.get("dnd5e", "rulesVersion") === "modern";                
                 disabled = true;
             }
-            return { active, priority, disabled, ...p};
+            return { active, priority, disabled, ...p };
         })
         .sort((s1, s2) => {
             if (s1.active === s2.active) return s1.priority - s2.priority;
@@ -61,14 +61,14 @@ export function getPacks() {
             const settingInfo = compendiumsSetting.items.find(s => s.collection === p.collection);
             const priority = settingInfo?.priority ?? 999;
             const active = settingInfo?.active ?? true;
-            return { active, priority, ...p};
+            return { active, priority, ...p };
         })
         .sort((s1, s2) => {
             if (s1.active === s2.active) return s1.priority - s2.priority;
             if (s1.active) return -1;
             return 1;
         })
-    return {spells: spellCompendiums, items: itemCompendiums};
+    return { spells: spellCompendiums, items: itemCompendiums };
 }
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;

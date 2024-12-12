@@ -714,7 +714,6 @@ export class sbiActor {
     }
 
     async setSpells() {
-        const spellAttacks = this.actions.filter(a => a.value.type === "spell");
         for (const spellcastingType of ["spellcasting", "innateSpellcasting", "utilitySpells"]) {
             if (this[spellcastingType].spellInfo) {
                 await this.setSpellcasting(spellcastingType);
