@@ -197,7 +197,7 @@ export class sbiParser {
 
             // There should only be one block under the Utility Spells title.
             if (spellDatas.length === 1) {
-                let { spellInfo } = this.getSpells(spellDatas[0].value, sRegex.spellInnateLine);
+                let { spellInfo } = this.getSpells(spellDatas[0], sRegex.spellInnateLine);
                 creature.utilitySpells = spellInfo;
                 creature[BlockID.features].push(new NameValueData("Utility Spells", spellInfo[0].value + "<br>" + spellInfo.slice(1).map(sl => sl.name + ": " + sl.value.join(", ")).join("<br>")));
             }
