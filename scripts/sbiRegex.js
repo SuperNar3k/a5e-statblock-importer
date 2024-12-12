@@ -39,12 +39,12 @@ export class sbiRegex {
     static perDayBase = "(?<perDay>\\d+)\\\/day";
     static perDayDetails = new RegExp(this.perDayBase, "idg");
     static perDayCountFull = new RegExp(`\\(${this.perDayBase}[\\);]`, "idg");
-    static savingThrowDetails = /must\s(make|succeed\son)\sa\sdc\s(?<saveDc>\d+)\s(?<saveAbility>\w+)\s(?<saveText>saving\sthrow|save)(?:.*(?<half>\bhalf\b)[A-Z\s]*damage)?/idg;
-    static savingThrowDetails24 = /(?<saveAbility>\w+)\s(?<saveText>saving throw):\s*dc\s(?<saveDc>\d+)(?:.*success:\s(?<half>\bhalf\b))?/idg;
+    static savingThrowDetails = /must\s(make|succeed\son)\sa\sdc\s(?<saveDc>\d+)\s(?<saveAbility>\w+)\s(?<saveText>saving\sthrow|save)(?:.*(?<halfDamage>\bhalf\b)[A-Z\s]*damage)?/idg;
+    static savingThrowDetails24 = /(?<saveAbility>\w+)\s(?<saveText>saving throw):\s*dc\s(?<saveDc>\d+)(?:.*success:\s(?<halfDamage>\bhalf\b))?/idg;
     static sensesDetails = /(?<name>\w+) (?<modifier>\d+)/idg;
     static skillDetails = /(?<name>\bacrobatics\b|\barcana\b|\banimal handling\b|\bathletics\b|\bdeception\b|\bhistory\b|\binsight\b|\bintimidation\b|\binvestigation\b|\bmedicine\b|\bnature\b|\bperception\b|\bperformance\b|\bpersuasion\b|\breligion\b|\bsleight of hand\b|\bstealth\b|\bsurvival\b) (?<modifier>[\+|-]\d+)/idg;
     static speedDetails = /(?<name>\w+)\s?(?<value>\d+)/idg;
-    static spellcastingDetails = /spellcasting\sability\sis\s(?<ability1>\w+)|(?<ability2>\w+)\sas\sthe\sspellcasting\sability|spell\ssave\sdc\s(?<saveDc>\d+)|(?<level>\d+)(.+)level\sspellcaster/idg;
+    static spellcastingDetails = /spellcasting\sability\sis\s(?<ability>\w+)|(?<innateAbility>\w+)\sas\sthe\sspellcasting\sability|spell\ssave\sdc\s(?<saveDc>\d+)|(?<level>\d+)(.+)level\sspellcaster/idg;
 
     // The block title regex is complicated. Here's the breakdown...
     // (^|[.!]\s*\n)                                    <-  Before the title there's either the string start, or the end of a sentence and a newline.
@@ -66,11 +66,11 @@ export class sbiRegex {
     static attack = /\+(?<toHit>\d+)\sto\shit/idg;
     static attack24 = /attack\sroll:\s*\+(?<toHit>\d+)/idg;
     static conditionTypes = /(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)/idg;
-    static damageRoll = /\(?(?<damageRoll1>\d+(d\d+)?)(\s?\+\s?(?<damageMod1>\d+))?\)?\s(?<damageType1>\w+)(\sdamage)(.+(plus|and)\s+(\d+\s+\(*)?((?<damageRoll2>\d+(d\d+)?)(\s?\+\s?(?<damageMod2>\d+))?)\)?\s(?<damageType2>\w+)(\sdamage))?/idg;
+    static damageRoll = /\(?(?<baseDamageRoll>\d+(d\d+)?)(\s?\+\s?(?<baseDamageMod>\d+))?\)?\s(?<baseDamageType>\w+)(\sdamage)(.+(plus|and)\s+(\d+\s+\(*)?((?<addDamageRoll>\d+(d\d+)?)(\s?\+\s?(?<addDamageMod>\d+))?)\)?\s(?<addDamageType>\w+)(\sdamage))?/idg;
     static damageTypes = /(?<damageType>\bbludgeoning\b|\bpiercing\b|\bslashing\b|\bacid\b|\bcold\b|\bfire\b|\blightning\b|\bnecrotic\b|\bpoison\b|\bpsychic\b|\bradiant\b|\bthunder\b)/idg;
     static knownLanguages = /(?<language>\baarakocra\b|\babyssal\b|\baquan\b|\bauran\b|\bcelestial\b|\bcommon\b|\bdeep\b|\bdraconic\b|\bdruidic\b|\bdwarvish\b|\belvish\b|\bgiant\b|\bgith\b|\bgnoll\b|\bgnomish\b|\bgoblin\b|\bhalfling\b|\bignan\b|\binfernal\b|\borc\b|\bprimordial\b|\bsylvan\b|\bterran\b|\bcant\b|\bundercommon\b)/idg;
     static legendaryActionCount = /take\s(?<count>\d+)\slegendary/idg;
-    static lairInitiativeCount = /initiative\scount\s(?<count>\d+)/idg;
+    static lairInitiativeCount = /initiative\scount\s(?<initiativeCount>\d+)/idg;
     static spellGroupHeader = "at.will|cantrips|(?<perDay>\\d+)\\/day(?: each)?|1st|2nd|3rd|4th|5th|6th|7th|8th|9th";
     static spellGroupHeaderNoPerDay = this.spellGroupHeader.replace("?<perDay>", "");
     static spellName = new RegExp(`(?<=,|(?<spellGroup>(?:${this.spellGroupHeader})(?:[\\w\\s\\(-]*(?:(?<slots>\\d+) slot|at.will)[^:]*)?):)\\s*(?<spellName>(?:[^.,:](?!${this.spellGroupHeaderNoPerDay}))+?)(\\s?[ABR+])?(?=,|[\\s.:]*$|\\s+(${this.spellGroupHeaderNoPerDay}))`, "idg");
@@ -82,5 +82,5 @@ export class sbiRegex {
     static reach = /reach\s(?<reach>\d+)\s?(f(ee|oo)?t|'|’)/idg;
     static recharge = /\(recharge\s(?<recharge>\d+)([–|-]\d+)?\)/idg;
     static versatile = /\((?<damageRoll>\d+d\d+( ?\+ ?\d+)?)\)\s(?<damageType>\w+)\sdamage\sif\sused\swith\stwo\shands/idg;
-    static target = /(?:a\s(?<range1>\d+)(?:-?(?:foot|feet|ft?.|'|’)\s(?<shape>\w+))|(?<targetsAmount>each|a|one)\s[\w\s]+?(?:within\s(?<range2>\d+)\s(?:foot|feet|ft?.|'|’)))/idg
+    static target = /(?:a\s(?<areaRange>\d+)(?:-?(?:foot|feet|ft?.|'|’)\s(?<shape>\w+))|(?<targetsAmount>each|a|one)\s[\w\s]+?(?:within\s(?<range>\d+)\s(?:foot|feet|ft?.|'|’)))/idg
 }

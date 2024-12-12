@@ -196,7 +196,7 @@ export class sbiUtils {
     }
 
     static camelToTitleUpperIfTwoLetters(string) {
-        return this.camelToTitleCase(string).split(" ").map(w => w.length == 2 ? w.toUpperCase() : w).join(" ");
+        return this.camelToTitleCase(string).split(" ").map(w => (w.length == 2 && w !== "To") ? w.toUpperCase() : w).join(" ");
     }
 
     // capitalizeFirstLetter("passive perception") => "Passive perception"

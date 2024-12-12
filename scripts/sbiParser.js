@@ -532,7 +532,7 @@ export class sbiParser {
             // What iniative count does the lair action activate?
             const lairInitiativeMatch = this.matchAndAnnotate(actionData.value.lines, sRegex.lairInitiativeCount)?.[0];
             if (lairInitiativeMatch) {
-                actionData.value.lairInitiativeCount = parseInt(lairInitiativeMatch.groups.count);
+                actionData.value.lairInitiativeCount = parseInt(lairInitiativeMatch.groups.initiativeCount);
             }
         } else if (actionData.name.toLowerCase().startsWith("legendary resistance")) {
             // Example:
@@ -564,7 +564,7 @@ export class sbiParser {
             actionData.value.save = {
                 dc: saveMatch.groups.saveDc,
                 ability: saveMatch.groups.saveAbility,
-                damageOnSave: saveMatch.groups.half ? "half" : "none"
+                damageOnSave: saveMatch.groups.halfDamage ? "half" : "none"
             };
         }
         if (attackMatch) {
@@ -573,12 +573,12 @@ export class sbiParser {
         const damageRollMatch = this.matchAndAnnotate(actionData.value.lines, sRegex.damageRoll)?.[0];
         if (damageRollMatch) {
             actionData.value.damage = {
-                damageRoll: damageRollMatch.groups.damageRoll1,
-                damageType: damageRollMatch.groups.damageType1,
-                damageMod: damageRollMatch.groups.damageMod1,
-                plusDamageRoll: damageRollMatch.groups.damageRoll2,
-                plusDamageType: damageRollMatch.groups.damageType2,
-                plusDamageMod: damageRollMatch.groups.damageMod2
+                damageRoll: damageRollMatch.groups.baseDamageRoll,
+                damageType: damageRollMatch.groups.baseDamageType,
+                damageMod: damageRollMatch.groups.baseDamageMod,
+                plusDamageRoll: damageRollMatch.groups.addDamageRoll,
+                plusDamageType: damageRollMatch.groups.addDamageType,
+                plusDamageMod: damageRollMatch.groups.addDamageMod
             }
         }
         const versatilematch = this.matchAndAnnotate(actionData.value.lines, sRegex.versatile)?.[0];
@@ -636,8 +636,8 @@ export class sbiParser {
     static parseTarget(actionData) {
         const match = this.matchAndAnnotate(actionData.value.lines, sRegex.target)?.[0];
         if (!match) return;
-        actionData.value.target = {range: match.groups.range1 || match.groups.range2};
-        if (match.groups.range1) {
+        actionData.value.target = {range: match.groups.areaRange || match.groups.range};
+        if (match.groups.areaRange) {
             actionData.value.target.shape = match.groups.shape;
         } else {
             actionData.value.target.type = "creature";
@@ -777,8 +777,8 @@ export class sbiParser {
 
         let spellcastingDetails = {};
         for (let match of spellcastingDetailsMatches) {
-            if (match.groups.ability1 || match.groups.ability2) {
-                spellcastingDetails.ability = match.groups.ability1 || match.groups.ability2;
+            if (match.groups.ability || match.groups.innateAbility) {
+                spellcastingDetails.ability = match.groups.ability || match.groups.innateAbility;
             }
             if (match.groups.saveDc) {
                 spellcastingDetails.saveDc = match.groups.saveDc;
