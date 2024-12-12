@@ -19,6 +19,14 @@ export function registerSettings() {
         type: Object,
         default: {spells: [], items: []},
     });
+
+    game.settings.register(MODULE_NAME, "debug", {
+        name: "Debug Mode",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: false,
+    });
 }
 
 export function getPacks() {

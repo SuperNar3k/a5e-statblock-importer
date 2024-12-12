@@ -96,12 +96,7 @@ export class sbiParser {
 
             // Remove everything we've found so far and see what we end up with.
             const foundLines = [...this.statBlocks.values()].flat().map(l => l.line);
-            let resultArray = lines.map(l => l.trim()).filter(item => !foundLines.includes(item));
-
-            if (resultArray.length) {
-                sUtils.log("Found unaccounted for lines.");
-                //debugger;
-            }
+            let unknownLines = lines.filter(item => !foundLines.includes(item));
 
             for (let [blockId, blockData] of this.statBlocks.entries()) {
                 switch (blockId) {
@@ -166,7 +161,7 @@ export class sbiParser {
                 }
             }
 
-            return { actor: this.actor, statBlocks: this.statBlocks };
+            return { actor: this.actor, statBlocks: this.statBlocks, unknownLines };
         }
     }
 
@@ -177,15 +172,10 @@ export class sbiParser {
             lines = [lines];
         }
 
-        //if (regex === sRegex.blockTitle) console.log(JSON.parse(JSON.stringify(lines)));
         const text = sUtils.combineToString(lines.map(l => l.line));
-        //if (regex === sRegex.blockTitle) console.log(text);
         const matches = [...text.matchAll(regex)];
-        //if (regex === sRegex.blockTitle) console.log(regex, matches);
         for (let match of matches) {
-            //if (regex === sRegex.blockTitle) console.log(match);
             const matchData = match.indices?.groups;
-            //if (regex === sRegex.blockTitle) console.log(Object.entries(matchData || {}));
             // We filter out any entry without a valid array of two indices, and we sort
             const orderedMatches = Object.entries(matchData || {}).filter(e => e[1]?.length == 2).sort((a, b) => a[1][0] - b[1][0]).map(m => ({label: m[0], indices: m[1]}));
 

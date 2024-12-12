@@ -1,11 +1,43 @@
-import { sbiConfig, getPacks } from "./sbiConfig.js";
+import { getPacks, MODULE_NAME } from "./sbiConfig.js";
+import { marked } from "../lib/marked.15.0.3.js";
+
+const logPrefix = "5e Statblock Importer |";
 
 export class sbiUtils {
 
-    static log(message, force = false) {
-        if (sbiConfig.options.debug || force) {
-            console.log("5e Statblock Importer | " + message);
+    static notify(type, message, ...objects) {
+        let consoleMethod = type === "info" ? "log" : type;
+        if (type !== "info" || game.settings.get(MODULE_NAME, "debug")) {
+            ui.notifications[type](logPrefix + " " + message);
+            if (objects.length) {
+                console[consoleMethod](logPrefix, ...objects);
+            }
         }
+    }
+
+    static log(message, ...objects) {
+        this.notify("info", message, ...objects);
+    }
+
+    static warn(message, ...objects) {
+        this.notify("warn", message, ...objects);
+    }
+
+    static error(message, ...objects) {
+        this.notify("error", message, ...objects);
+    }
+
+    static stripMarkdownAndCleanInput(text) {
+        const domParser = new DOMParser();
+        const html = domParser.parseFromString(marked.parse(text), "text/html");
+        return html.body.innerText
+            .split(/[\n\r]+/g)
+            .map(str => str.trim())
+            .map(str => str.replace("::", "")) // remove some Homebrewery markdown
+            .map(str => str.replace(/\s+/g, " ")) // remove double spaces
+            .filter(str => !str.startsWith("{{") && !str.startsWith("}}") && str !== ":") // remove some other Homebrewery markdown
+            .filter(str => str) // remove empty lines
+            .join("\n");
     }
 
     static getAbilityMod(abilityValue) {

@@ -1,6 +1,6 @@
 import { sbiUtils } from "./sbiUtils.js";
 import { sbiParser } from "./sbiParser.js";
-import { sbiConfig, MODULE_NAME } from "./sbiConfig.js";
+import { MODULE_NAME } from "./sbiConfig.js";
 import { Blocks } from "./sbiData.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -90,20 +90,6 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
             });
         });
 
-        // ###############################
-        // DEBUG
-        // ###############################
-        //if (sbiConfig.options.debug && sbiConfig.options.autoDebug) {
-        //    const lines = sbiConfig.options.testBlock
-        //        .trim()
-        //        .split(/\n/g)
-        //        .filter(str => str.length); // remove empty lines
-        //
-        //    sbiParser.parseInput(lines)
-        //        .then(parseResult => { return sActor.convertCreatureToActorAsync(parseResult.creature, null); })
-        //        .then(actor => { actor.sheet.render(true); });
-        //}
-
         sbiUtils.log("Listeners activated");
     }
 
@@ -120,7 +106,18 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
             .filter(str => str.length); // remove empty lines
 
         try {
-            const { actor, statBlocks } = sbiParser.parseInput(lines);
+            const { actor, statBlocks, unknownLines } = sbiParser.parseInput(lines);
+
+            if (!statBlocks.size) {
+                sbiUtils.error("Unable to parse statblock");
+                return {};
+            }
+
+            if (unknownLines.length) {
+                sbiUtils.warn("Found unaccounted for lines", unknownLines);
+            }
+
+            sbiUtils.log("Parsing completed", statBlocks, actor);
             
             // Each line will be its own span, with data attributes indicating their block
             let spanLines = lines.map((line, i) => {
@@ -130,7 +127,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
                 spanLine.setAttribute("data-block", block);
 
                 // If the line has matched data, we also surround each matched part with a span
-                const matchData = statBlocks.get(block).find(l => l.lineNumber == i).matchData || [];
+                const matchData = statBlocks.get(block)?.find(l => l.lineNumber == i).matchData || [];
                 matchData.sort((a, b) => a.indices[0] - b.indices[0]);
 
                 let encompassingEndDoneIndex = -1;
@@ -138,9 +135,8 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
                     const spanStart = matchData[md].indices[0];
                     const spanEnd = matchData[md].indices[1];
 
-                    // We check if this match is inside the "previous" one, like "Acid Breath (Recharge 5-6)" where recharge match is inside title match.
+                    // We check if this match is inside the "previous" one, like "1st level (4 slots)" where the number of slots is inside the spell group name.
                     // We only manage one level of nesting, it should be enough.
-                    // ACTUALLY, not really doing this anymore since I changed the block title regex to exclude per day, etc from the title.
                     if (md > 0 && matchData[md - 1].indices[1] > spanEnd) {
                         // The "previous" span encompasses this one, we insert the parent span end first and mark it as done
                         line = [line.slice(0, matchData[md - 1].indices[1]), "</span>", line.slice(matchData[md - 1].indices[1])].join("");
@@ -175,16 +171,11 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
                 input.innerHTML += "\n";
             });
             input.scrollTop = scrollTop;
-console.log(actor, statBlocks);
+
             return { actor, statBlocks };
             
         } catch (error) {
-            if (true || sbiConfig.options.debug) {
-                throw error;
-            } else {
-                ui.notifications.error("5E STATBLOCK IMPORTER: An error has occured. Please report it using the module link so it can get fixed.");
-                sbiUtils.log(`ERROR: ${error}`, true);
-            }
+            sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", error);
         }
     }
 
@@ -193,10 +184,9 @@ console.log(actor, statBlocks);
         const folderSelect = document.getElementById("sbi-import-select");
         const selectedFolderName = folderSelect.options[folderSelect.selectedIndex].text;
         const selectedFolder = selectedFolderName == "None" ? null : actorFolders.find(f => f.name === selectedFolderName);
-        const { actor } = await sbiWindow.parse();
+        const { actor } = sbiWindow.parse();
         if (actor) {
             const actor5e = await actor.createActor5e(selectedFolder?.id);
-            //console.log(actor5e);
             // Open the sheet.
             actor5e.sheet.render(true);
         }
