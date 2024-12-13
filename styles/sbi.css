@@ -90,6 +90,9 @@
 #sbi-compendium-options-menu {
     .container {
         display: flex;
+        & > * {
+            flex: 1;
+        }
     }
     footer {
         display: flex;

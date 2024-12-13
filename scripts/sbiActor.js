@@ -714,10 +714,14 @@ export class sbiActor {
     }
 
     async setSpells() {
+        this.missingSpells = [];
         for (const spellcastingType of ["spellcasting", "innateSpellcasting", "utilitySpells"]) {
             if (this[spellcastingType].spellInfo) {
                 await this.setSpellcasting(spellcastingType);
             }
+        }
+        if (this.missingSpells.length) {
+            sUtils.warn("Some spells could not be found in your compendiums and have been created as placeholders: " + this.missingSpells.join(", "));
         }
     }
 
@@ -760,40 +764,52 @@ export class sbiActor {
 
         // Add spells to actor.
         for (const spellObj of spellObjs) {
-            const spell = await sUtils.getItemFromPacksAsync(spellObj.name, "spell");
+            let spell = await sUtils.getItemFromPacksAsync(spellObj.name, "spell");
 
-            if (spell) {
-                if (spellObj.type === "slots") {
-                    // Update the actor's number of slots per level.
-                    this.set5eProperty(`system.spells.spell${spell.system.level}.value`, spellObj.count);
-                    this.set5eProperty(`system.spells.spell${spell.system.level}.max`, spellObj.count);
-                    this.set5eProperty(`system.spells.spell${spell.system.level}.override`, spellObj.count);
-                    foundry.utils.setProperty(spell, "system.preparation.prepared", true);
-                } else if (spellObj.type === "innate") {
-                    if (spellObj.count) {
-                        let mainSpellActivityId = Object.values(spell.system.activities || {})[0]._id;
-                        foundry.utils.setProperty(spell, `system.activities.${mainSpellActivityId}.consumption.targets`, [{
-                            type: "itemUses",
-                            value: 1
-                        }]);
-                        foundry.utils.setProperty(spell, "system.uses.value", spellObj.count);
-                        foundry.utils.setProperty(spell, "system.uses.max", "" + spellObj.count);
-                        foundry.utils.setProperty(spell, "system.uses.recovery", [{period: "day", type: "recoverAll"}]);
-                        foundry.utils.setProperty(spell, "system.preparation.mode", "innate");
-                    } else {
-                        foundry.utils.setProperty(spell, "system.preparation.mode", "atwill");
+            if (!spell) {
+                this.missingSpells.push(spellObj.name);
+                const activityId = foundry.utils.randomID();
+                spell = {
+                    name: spellObj.name,
+                    type: "spell",
+                    system: {
+                        activities: {
+                            [activityId]: {_id: activityId, type: "utility", activation: {type: "action", value: 1}}
+                        }
                     }
-                } else if (spellObj.type === "at will") {
-                    foundry.utils.setProperty(spell, "system.preparation.mode", "atwill");
-                } else if (spellObj.type === "cantrip") {
-                    // Don't need to set anything special because it should already be set on the spell we retrieved from the pack.
-                    foundry.utils.setProperty(spell, "system.preparation.prepared", true);
-                }
+                };
+            }
 
-                // Add the spell to the character sheet if it doesn't exist already.
-                if (!this.#dnd5e.items.find(i => i.name === spell.name)) {
-                    this.addItem(spell);
+            if (spellObj.type === "slots") {
+                // Update the actor's number of slots per level.
+                this.set5eProperty(`system.spells.spell${spell.system.level}.value`, spellObj.count);
+                this.set5eProperty(`system.spells.spell${spell.system.level}.max`, spellObj.count);
+                this.set5eProperty(`system.spells.spell${spell.system.level}.override`, spellObj.count);
+                foundry.utils.setProperty(spell, "system.preparation.prepared", true);
+            } else if (spellObj.type === "innate") {
+                if (spellObj.count) {
+                    let mainSpellActivityId = Object.values(spell.system.activities)[0]._id;
+                    foundry.utils.setProperty(spell, `system.activities.${mainSpellActivityId}.consumption.targets`, [{
+                        type: "itemUses",
+                        value: 1
+                    }]);
+                    foundry.utils.setProperty(spell, "system.uses.value", spellObj.count);
+                    foundry.utils.setProperty(spell, "system.uses.max", "" + spellObj.count);
+                    foundry.utils.setProperty(spell, "system.uses.recovery", [{period: "day", type: "recoverAll"}]);
+                    foundry.utils.setProperty(spell, "system.preparation.mode", "innate");
+                } else {
+                    foundry.utils.setProperty(spell, "system.preparation.mode", "atwill");
                 }
+            } else if (spellObj.type === "at will") {
+                foundry.utils.setProperty(spell, "system.preparation.mode", "atwill");
+            } else if (spellObj.type === "cantrip") {
+                // Don't need to set anything special because it should already be set on the spell we retrieved from the pack.
+                foundry.utils.setProperty(spell, "system.preparation.prepared", true);
+            }
+
+            // Add the spell to the character sheet if it doesn't exist already.
+            if (!this.#dnd5e.items.find(i => i.name === spell.name)) {
+                this.addItem(spell);
             }
         }
     }

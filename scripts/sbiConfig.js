@@ -41,21 +41,18 @@ export function getPacks() {
             const priority = settingInfo?.priority ?? 999;
             let active = settingInfo?.active ?? false;
             let disabled = false;
-            if (p.collection === "dnd5e.spells") {
-                active = game.settings.get("dnd5e", "rulesVersion") === "legacy";
-                disabled = true;
-            }
-            if (p.collection === "dnd-players-handbook.spells") { // This will be replaced with the new SRD
-                active = game.settings.get("dnd5e", "rulesVersion") === "modern";                
-                disabled = true;
-            }
             return { active, priority, disabled, ...p };
-        })
-        .sort((s1, s2) => {
-            if (s1.active === s2.active) return s1.priority - s2.priority;
-            if (s1.active) return -1;
-            return 1;
-        })
+        });
+    const srdCollection = game.settings.get("dnd5e", "rulesVersion") === "legacy" ? "dnd5e.spells" : "dnd5e.spells"; // This will be updated when the 2024 SRD releases
+    // This is assuming that the new SRD is going to be a separate compendium. The appropriate one according to the rules setting will be locked as active.
+    const srd = spellCompendiums.find(p => p.collection === srdCollection);
+    srd.active = true;
+    srd.disabled = true;
+    spellCompendiums.sort((s1, s2) => {
+        if (s1.active === s2.active) return s1.priority - s2.priority;
+        if (s1.active) return -1;
+        return 1;
+    });
     const itemCompendiums = compendiums
         .map(p => {
             const settingInfo = compendiumsSetting.items.find(s => s.collection === p.collection);
@@ -67,7 +64,7 @@ export function getPacks() {
             if (s1.active === s2.active) return s1.priority - s2.priority;
             if (s1.active) return -1;
             return 1;
-        })
+        });
     return { spells: spellCompendiums, items: itemCompendiums };
 }
 
@@ -78,7 +75,7 @@ class CompendiumOptionsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
         tag: "form",
         id: "sbi-compendium-options-menu",
-        position: { width: "auto", height: 700 },
+        position: { width: 700, height: 700 },
         classes: ["sbi-options-menu"],
         window: {
             resizable: true,
@@ -120,7 +117,7 @@ class CompendiumOptionsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
     static confirm() {
         let compendiums = {spells: [], items: []};
         const spellsList = document.getElementById("sbi-spell-compendiums");
-        compendiums.spells = [...spellsList.querySelectorAll("input")].filter(s => !["dnd5e.spells", "dnd-players-handbook.spells"].includes(s.collection)) // New SRD here too
+        compendiums.spells = [...spellsList.querySelectorAll("input")]
             .sort((s1, s2) => {
                 if (s1.checked === s2.checked) return 0;
                 if (s1.checked) return -1;
