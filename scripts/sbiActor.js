@@ -301,11 +301,19 @@ export class sbiActor {
         const hasDamageMod = !!damageMod;
 
         if (damageRoll && damageType) {
-            const damagePart = {
-                number: parseInt(damageRoll.split("d")[0]),
-                denomination: parseInt(damageRoll.split("d")[1]),
-                types: [damageType]
-            };
+            let damagePart;
+            if (damageRoll.includes("d")) {
+                damagePart = {
+                    number: parseInt(damageRoll.split("d")[0]),
+                    denomination: parseInt(damageRoll.split("d")[1]),
+                    types: [damageType]
+                };
+            } else {
+                damagePart = {
+                    custom: {enabled: true, formula: damageRoll},
+                    types: [damageType]
+                }
+            }
             if (activity === "attack" && hasDamageMod) {
                 // Some monsters have attacks where the damage doesn't match the modifier.
                 var abilityMod = sUtils.getAbilityMod(this.#dnd5e.system.abilities[itemData.system.activities[activityId].attack.ability].value);
@@ -321,11 +329,18 @@ export class sbiActor {
         }
 
         if (plusDamageRoll && plusDamageType) {
-            damageParts.push({
-                number: parseInt(plusDamageRoll.split("d")[0]),
-                denomination: parseInt(plusDamageRoll.split("d")[1]),
-                types: [plusDamageType]
-            });
+            if (plusDamageRoll.includes("d")) {
+                damageParts.push({
+                    number: parseInt(plusDamageRoll.split("d")[0]),
+                    denomination: parseInt(plusDamageRoll.split("d")[1]),
+                    types: [plusDamageType]
+                });
+            } else {
+                damageParts.push({
+                    custom: {enabled: true, formula: plusDamageRoll},
+                    types: [plusDamageType]
+                });
+            }
         }
 
         foundry.utils.setProperty(itemData, `system.damage.base`, damageParts[0]);

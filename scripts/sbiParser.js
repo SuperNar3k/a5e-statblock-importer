@@ -575,10 +575,10 @@ export class sbiParser {
             actionData.value.damage = {
                 damageRoll: damageRollMatch.groups.baseDamageRoll,
                 damageType: damageRollMatch.groups.baseDamageType,
-                damageMod: damageRollMatch.groups.baseDamageMod,
+                damageMod: damageRollMatch.groups.baseDamageMod?.replace(/[+\s]/g, ""),
                 plusDamageRoll: damageRollMatch.groups.addDamageRoll,
                 plusDamageType: damageRollMatch.groups.addDamageType,
-                plusDamageMod: damageRollMatch.groups.addDamageMod
+                plusDamageMod: damageRollMatch.groups.addDamageMod?.replace(/[+\s]/g, ""),
             }
         }
         const versatilematch = this.matchAndAnnotate(actionData.value.lines, sRegex.versatile)?.[0];
