@@ -571,7 +571,7 @@ export class sbiActor {
             }
 
             // If no bypasses have been set, then assume Foundry will take care of setting the special damage text.
-            if (!this.#dnd5e.system.traits[damageID]?.bypasses) {
+            if (!this.#dnd5e.system.traits?.[damageID]?.bypasses) {
                 this.set5eProperty(`system.traits.${damageID}.custom`, sUtils.capitalizeFirstLetter(specialDamage));
             }
         }
