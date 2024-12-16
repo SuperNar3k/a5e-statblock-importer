@@ -316,7 +316,12 @@ export class sbiActor {
             }
             if (activity === "attack" && hasDamageMod) {
                 // Some monsters have attacks where the damage doesn't match the modifier.
-                var abilityMod = sUtils.getAbilityMod(this.#dnd5e.system.abilities[itemData.system.activities[activityId].attack.ability].value);
+                let attackAbility = itemData.system.activities[activityId].attack.ability;
+                if (attackAbility === "spellcasting") {
+                    attackAbility = this.#dnd5e.system.attributes?.spellcasting;
+                }
+                const attackAbilityValue = this.#dnd5e.system.abilities[attackAbility]?.value || 10;
+                const abilityMod = sUtils.getAbilityMod(attackAbilityValue);
                 if (damageMod != abilityMod) {
                     const diff = damageMod - abilityMod;
                     damagePart.bonus = "@mod " + (diff > 0 ? "+" : "-") + Math.abs(diff);
