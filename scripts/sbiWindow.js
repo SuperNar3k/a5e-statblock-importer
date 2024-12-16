@@ -72,7 +72,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         // Add a default option.
         folderSelect.add(new Option("None"));
 
-        var actorFolders = [...game.folders]
+        const actorFolders = [...game.folders]
             .filter(f => f.type === "Actor")
             .map(f => ({ "name": f.name, "id": f._id }));
 
