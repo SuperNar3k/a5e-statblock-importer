@@ -78,7 +78,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
         // Add the available folders.
         for (const folder of actorFolders) {
-            folderSelect.add(new Option(folder.name));
+            folderSelect.add(new Option(folder.name, folder.id));
         }
 
         ["blur", "input", "paste"].forEach(eventType => {
@@ -177,11 +177,10 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
     static async import() {
         sbiUtils.log("Clicked import button");
         const folderSelect = document.getElementById("sbi-import-select");
-        const selectedFolderName = folderSelect.options[folderSelect.selectedIndex].text;
-        const selectedFolder = selectedFolderName == "None" ? null : actorFolders.find(f => f.name === selectedFolderName);
+        const selectedFolderId = folderSelect.options[folderSelect.selectedIndex].value;
         const { actor } = sbiWindow.parse();
         if (actor) {
-            const actor5e = await actor.createActor5e(selectedFolder?.id);
+            const actor5e = await actor.createActor5e(selectedFolderId);
             // Open the sheet.
             actor5e.sheet.render(true);
         }
