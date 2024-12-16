@@ -1063,18 +1063,26 @@ export class sbiActor {
                     sUtils.assignToObject(itemData, `system.activities.${activityId}.damage.includeBase`, false);
                 }
                 if (activity == "save" || !hasDamageMod) {
-                    parts.push({
-                        number: parseInt(damageRoll.split("d")[0]),
-                        denomination: parseInt(damageRoll.split("d")[1]),
-                        types: [damageType]
-                    });
+                    if (damageRoll.includes("d")) {
+                        parts.push({
+                            number: parseInt(damageRoll.split("d")[0]),
+                            denomination: parseInt(damageRoll.split("d")[1]),
+                            types: [damageType]
+                        });
+                    } else {
+                        parts.push({custom: {enabled: true, formula: damageRoll}});
+                    }
                 }
                 if (damageParts.length > 1) {
-                    parts.push({
-                        number: parseInt(plusDamageRoll.split("d")[0]),
-                        denomination: parseInt(plusDamageRoll.split("d")[1]),
-                        types: [plusDamageType]
-                    });
+                    if (damageRoll.includes("d")) {
+                        parts.push({
+                            number: parseInt(plusDamageRoll.split("d")[0]),
+                            denomination: parseInt(plusDamageRoll.split("d")[1]),
+                            types: [plusDamageType]
+                        });
+                    } else {
+                        parts.push({custom: {enabled: true, formula: plusDamageRoll}});
+                    }
                 }
                 sUtils.assignToObject(itemData, `system.activities.${activityId}.damage.parts`, parts);
             }

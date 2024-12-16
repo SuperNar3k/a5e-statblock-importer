@@ -66,7 +66,7 @@ export class sbiRegex {
     static attack = /\+(?<toHit>\d+) to hit/i;
     static attack24 = /attack\sroll:\s*\+(?<toHit>\d+)/i;
     static conditionTypes = /(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)/idg;
-    static damageRoll = /\(?(?<damageRoll1>\d+(d\d+)?)(\s?\+\s?(?<damageMod1>\d+))?\)? (?<damageType1>\w+)( damage)(.+(plus|and)\s+(\d+\s+\(*)?((?<damageRoll2>\d+(d\d+)?)(\s?\+\s?(?<damageMod2>\d+))?)\)? (?<damageType2>\w+)( damage))?/i;
+    static damageRoll = /\(?(?<damageRoll1>\d+d\d+?)\s?(?<damageMod1>[+-]\s?\d+)?\)? (?<damageType1>\w+)(?: damage)(?:.+(?:plus|and)\s+(?:\d+\s+\(*)?(?:(?<damageRoll2>\d+d\d+?)\s?(?<damageMod2>[+-]\s?\d+)?)\)? (?<damageType2>\w+)(?: damage))?/i;
     static damageTypes = /(?<damageType>\bbludgeoning\b|\bpiercing\b|\bslashing\b|\bacid\b|\bcold\b|\bfire\b|\blightning\b|\bnecrotic\b|\bpoison\b|\bpsychic\b|\bradiant\b|\bthunder\b)/idg;
     static knownLanguages = /(?<language>\baarakocra\b|\babyssal\b|\baquan\b|\bauran\b|\bcelestial\b|\bcommon\b|\bdeep\b|\bdraconic\b|\bdruidic\b|\bdwarvish\b|\belvish\b|\bgiant\b|\bgith\b|\bgnoll\b|\bgnomish\b|\bgoblin\b|\bhalfling\b|\bignan\b|\binfernal\b|\borc\b|\bprimordial\b|\bsylvan\b|\bterran\b|\bcant\b|\bundercommon\b)/idg;
     static legendaryActionCount = /take (?<count>\d+) legendary/i;

@@ -206,7 +206,7 @@ export class sbiParser {
             let spellcastingOutsideFeatures = blockDatas.find(b => b.name.toLowerCase() == "spellcasting");
             if (spellcastingOutsideFeatures) {
                 blockDatas = blockDatas.filter(b => b.name !== spellcastingOutsideFeatures.name);
-                let { spellInfo } = this.getSpells(spellcastingOutsideFeatures.value, sRegex.spellInnateLine);
+                let { spellInfo } = this.getSpells(spellcastingOutsideFeatures, sRegex.spellInnateLine);
                 creature.innateSpellcasting = spellInfo;
                 blockDatas.push(new NameValueData(spellcastingOutsideFeatures.name, spellInfo[0].value + "<br>" + spellInfo.slice(1).map(sl => sl.name + ": " + sl.value.join(", ")).join("<br>")));
             }
