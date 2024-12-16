@@ -735,6 +735,7 @@ export class sbiActor {
 
     async setSpells() {
         this.missingSpells = [];
+        this.obsoleteSpells = [];
         for (const spellcastingType of ["spellcasting", "innateSpellcasting", "utilitySpells"]) {
             if (this[spellcastingType].spellInfo) {
                 await this.setSpellcasting(spellcastingType);
@@ -742,6 +743,9 @@ export class sbiActor {
         }
         if (this.missingSpells.length) {
             sUtils.warn("Some spells could not be found in your compendiums and have been created as placeholders: " + this.missingSpells.join(", "));
+        }
+        if (this.obsoleteSpells.length) {
+            sUtils.warn("Some spells have been imported from 2014 sources while you are playing with 2024 rules, review your Compendium Options: " + this.obsoleteSpells.join(", "));
         }
     }
 
@@ -798,6 +802,10 @@ export class sbiActor {
                         }
                     }
                 };
+            }
+
+            if (spell.system.source?.rules === "2014") {
+                this.obsoleteSpells.push(spellObj.name);
             }
 
             if (spellObj.type === "slots") {

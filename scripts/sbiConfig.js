@@ -44,7 +44,7 @@ export function getPacks() {
             return { active, priority, disabled, ...p };
         });
     const srdCollection = game.settings.get("dnd5e", "rulesVersion") === "legacy" ? "dnd5e.spells" : "dnd5e.spells"; // This will be updated when the 2024 SRD releases
-    // This is assuming that the new SRD is going to be a separate compendium. The appropriate one according to the rules setting will be locked as active.
+    // This is assuming that the new SRD is going to be a separate compendium with a new name. The appropriate one according to the rules setting will be locked as active.
     const srd = spellCompendiums.find(p => p.collection === srdCollection);
     srd.active = true;
     srd.disabled = true;
