@@ -73,7 +73,7 @@ export class sbiRegex {
     static lairInitiativeCount = /initiative\scount\s(?<initiativeCount>\d+)/idg;
     static spellGroupHeader = "at.will|cantrips|(?<perDay>\\d+)\\/day(?: each)?|1st|2nd|3rd|4th|5th|6th|7th|8th|9th";
     static spellGroupHeaderNoPerDay = this.spellGroupHeader.replace("?<perDay>", "");
-    static spellName = new RegExp(`(?<=,|(?<spellGroup>(?:${this.spellGroupHeader})(?:[\\w\\s\\(-]*(?:(?<slots>\\d+) slot|at.will)[^:]*)?):)\\s*(?<spellName>(?:[^.,:](?!${this.spellGroupHeaderNoPerDay}))+?)(\\s?[ABR+])?(?=,|[\\s.:]*$|\\s+(${this.spellGroupHeaderNoPerDay}))`, "idg");
+    static spellName = new RegExp(`(?<=,|(?<spellGroup>(?:${this.spellGroupHeader})(?:[\\w\\s\\(-]*(?:(?<slots>\\d+) slot|at.will)[^:]*)?):)\\s*(?<spellName>(?:[^.,:](?!${this.spellGroupHeaderNoPerDay}))+?)(\\s[ABR]|\\s?\\+)?(?:\\s*\\(.*?\\)\\s*)?(?=,|[\\s.:]*$|\\s+(${this.spellGroupHeaderNoPerDay}))`, "idg");
     static spellLine = /(at-will|cantrips|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)[\w\s\(\)-]*:/ig;
     static spellInnateLine = /at will:|\d\/day( each)?/ig;
     static spellInnateSingle = /(?<perDay>\d+)\/day.*innately\scast\s(?<spellName>[\w|\s]+)(\s\(.+\))?,/idg;
