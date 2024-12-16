@@ -14,7 +14,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
     static DEFAULT_OPTIONS = {
         id: "sbi-window",
-        position: { width: 800 },
+        position: { width: 800, height: 640 },
         classes: ["sbi-window"],
         window: {
             resizable: true,
