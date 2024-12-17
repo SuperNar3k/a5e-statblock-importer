@@ -70,7 +70,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         const folderSelect = document.getElementById("sbi-import-select");
 
         // Add a default option.
-        folderSelect.add(new Option("None"));
+        folderSelect.add(new Option("None", ""));
 
         const actorFolders = [...game.folders]
             .filter(f => f.type === "Actor")
@@ -177,10 +177,10 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
     static async import() {
         sbiUtils.log("Clicked import button");
         const folderSelect = document.getElementById("sbi-import-select");
-        const selectedFolderId = folderSelect.options[folderSelect.selectedIndex].value;
-        const { actor } = sbiWindow.parse();
-        if (actor) {
-            const actor5e = await actor.createActor5e(selectedFolderId);
+        const selectedFolderId = folderSelect.options[folderSelect.selectedIndex].value ?? undefined;
+        const parseResult = sbiWindow.parse();
+        if (parseResult?.actor) {
+            const actor5e = await parseResult.actor.createActor5e(selectedFolderId);
             // Open the sheet.
             actor5e.sheet.render(true);
         }
