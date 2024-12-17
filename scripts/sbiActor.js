@@ -364,11 +364,24 @@ export class sbiActor {
             itemData.system.activities[activityId].damage.parts.push(damageParts[1]);
         }
 
-        if (actionData.value.damage.versatile) {
-            itemData.system.damage.versatile = versatilematch.groups.damageRoll;
-            if (itemData.system.properties) {
-                itemData.system.properties.ver = true;
+        const versatileDamageRoll = actionData.value.damage.versatileDamageRoll;
+        const versatileDamageType = actionData.value.damage.versatileDamageType;
+        if (versatileDamageRoll) {
+            let versatileDamagePart;
+            if (versatileDamageRoll.includes("d")) {
+                versatileDamagePart = {
+                    number: parseInt(versatileDamageRoll.split("d")[0]),
+                    denomination: parseInt(versatileDamageRoll.split("d")[1]),
+                    types: [versatileDamageType]
+                };
+            } else {
+                versatileDamagePart = {
+                    custom: {enabled: true, formula: versatileDamageRoll},
+                    types: [versatileDamageType]
+                }
             }
+            foundry.utils.setProperty(itemData, `system.damage.versatile`, versatileDamagePart);
+            foundry.utils.setProperty(itemData, `system.properties.ver`, true);
         }
     }
 

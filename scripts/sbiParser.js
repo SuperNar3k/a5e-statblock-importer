@@ -579,11 +579,10 @@ export class sbiParser {
                 plusDamageRoll: damageRollMatch.groups.addDamageRoll,
                 plusDamageType: damageRollMatch.groups.addDamageType,
                 plusDamageMod: damageRollMatch.groups.addDamageMod?.replace(/[+\s]/g, ""),
+                versatileDamageRoll: damageRollMatch.groups.versatileDamageRoll,
+                versatileDamageType: damageRollMatch.groups.versatileDamageType,
+                versatileDamageMod: damageRollMatch.groups.versatileDamageMod?.replace(/[+\s]/g, ""),
             }
-        }
-        const versatilematch = this.matchAndAnnotate(actionData.value.lines, sRegex.versatile)?.[0];
-        if (versatilematch) {
-            actionData.value.damage.versatile = versatilematch.groups.damageRoll;
         }
     }
 
