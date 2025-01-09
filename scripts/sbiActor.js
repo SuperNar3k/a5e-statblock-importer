@@ -693,13 +693,13 @@ export class sbiActor {
                         this.set5eProperty("prototypeToken.sight.range", senseRange);
                         break;
                     case "tremorsense":
-                        this.set5eProperty("prototypeToken.detectionModes", (this.#dnd5e.prototypeToken.detectionModes || []).concat([{enabled: true, id: "feelTremor", range: senseRange}]));
+                        this.set5eProperty("prototypeToken.detectionModes", (this.#dnd5e.prototypeToken?.detectionModes || []).concat([{enabled: true, id: "feelTremor", range: senseRange}]));
                         break;
                     case "blindsight":
-                        this.set5eProperty("prototypeToken.detectionModes", (this.#dnd5e.prototypeToken.detectionModes || []).concat([{enabled: true, id: "blindsight", range: senseRange}]));
+                        this.set5eProperty("prototypeToken.detectionModes", (this.#dnd5e.prototypeToken?.detectionModes || []).concat([{enabled: true, id: "blindsight", range: senseRange}]));
                         break;
                     case "truesight":
-                        this.set5eProperty("prototypeToken.detectionModes", (this.#dnd5e.prototypeToken.detectionModes || []).concat([{enabled: true, id: "seeAll", range: senseRange}]));
+                        this.set5eProperty("prototypeToken.detectionModes", (this.#dnd5e.prototypeToken?.detectionModes || []).concat([{enabled: true, id: "seeAll", range: senseRange}]));
                         break;
                     default:
                         break;
