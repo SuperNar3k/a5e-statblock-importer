@@ -688,7 +688,23 @@ export class sbiActor {
                 continue;
             } else if (senseName === "blindsight" || senseName === "darkvision" || senseName === "tremorsense" || senseName === "truesight") {
                 this.set5eProperty(`system.attributes.senses.${senseName}`, senseRange);
-                this.set5eProperty("token.dimSight", senseRange);
+                switch (senseName) {
+                    case "darkvision":
+                        this.set5eProperty("prototypeToken.sight.range", senseRange);
+                        break;
+                    case "tremorsense":
+                        this.set5eProperty("prototypeToken.detectionModes", (this.#dnd5e.prototypeToken.detectionModes || []).concat([{enabled: true, id: "feelTremor", range: senseRange}]));
+                        break;
+                    case "blindsight":
+                        this.set5eProperty("prototypeToken.detectionModes", (this.#dnd5e.prototypeToken.detectionModes || []).concat([{enabled: true, id: "blindsight", range: senseRange}]));
+                        break;
+                    case "truesight":
+                        this.set5eProperty("prototypeToken.detectionModes", (this.#dnd5e.prototypeToken.detectionModes || []).concat([{enabled: true, id: "seeAll", range: senseRange}]));
+                        break;
+                    default:
+                        break;
+                }
+                this.set5eProperty("prototypeToken.sight.enabled", false);
             } else {
                 const specialSense = sUtils.capitalizeFirstLetter(senseName);
                 specialSenses.push(`${specialSense} ${senseRange} ft`);
