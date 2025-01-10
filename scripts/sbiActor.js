@@ -147,6 +147,23 @@ export class sbiActor {
                 }
             } else {
                 itemData.name = actionName;
+                
+                if (type === BlockID.lairActions) {
+                    // This is to allow Lair Actions formatted like regular actions (with a title and a description).
+                    activationType = "lair";
+                    if (game.system.version > "4") {
+                        let activityId = foundry.utils.randomID();
+                        sUtils.assignToObject(itemData, `system.activities.${activityId}`, {
+                            _id: activityId, type: "utility",
+                            activation: {type: "lair"}
+                        });
+                    }
+                    if (!actor.system.resources?.lair?.value) {
+                        await actor.update(sUtils.assignToObject({}, "system.resources.lair.value", true));
+                        await actor.update(sUtils.assignToObject({}, "system.resources.lair.initiative", 20));
+                    }
+                }
+
                 sUtils.assignToObject(itemData, "system.activation.type", activationType);
 
                 // How many actions does this cost?
@@ -158,13 +175,14 @@ export class sbiActor {
                     itemData.name = itemData.name.slice(0, actionCostMatch.index).trim();
                 }
 
+                this.setAttackOrSave(description, itemData, actor);
                 this.setRecharge(itemData.name, itemData);
                 sUtils.assignToObject(itemData, "system.consume.type", "attribute");
                 sUtils.assignToObject(itemData, "system.consume.target", "resources.legact.value");
                 sUtils.assignToObject(itemData, "system.consume.amount", actionCost);
                 sUtils.assignToObject(itemData, "system.activation.cost", actionCost);
 
-                if (game.system.version > "4") {
+                if (type !== BlockID.lairActions && game.system.version > "4") {
                     let activityId = foundry.utils.randomID();
                     sUtils.assignToObject(itemData, `system.activities.${activityId}`, {
                         _id: activityId, type: "utility",
