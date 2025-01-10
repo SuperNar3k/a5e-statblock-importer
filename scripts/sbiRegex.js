@@ -55,7 +55,7 @@ export class sbiRegex {
     // ([\w\d\-+,;'’]+\s?){0,3}                         <-  Represents the words that follow the first word, using the same regex for the allowed characters.
     //                                                      We assume the title only has 0-3 words following it, otherwise it's probably a sentence.
     // (\((?!spell save)[^)]+\))?                       <-  Represents an optional bit in parentheses, like '(Recharge 5-6)'.
-    static blockTitle = /(?:^|[.!]\s*\n)(?<title>(?:[A-Z][\w\d\-+,;'’]+[\s\-]?)(?:(?:of|and|the|from|in|at|on|with|to|by|into)\s)?(?:[\w\d\-+,;'’]+\s?){0,3})(?:\s\((?!spell save)[^)]+\))?[.!]/dg;
+    static blockTitle = /(?:^|[.:!]\s*\n)(?<title>(?:[A-Z][\w\d\-+,;'’]+[\s\-]?)(?:(?:of|and|the|from|in|at|on|with|to|by|into)\s)?(?:[\w\d\-+,;'’]+\s?){0,3})(?:\s\((?!spell save)[^)]+\))?[.!]/dg;
     static villainActionTitle = /(^|[.!]\s*\n)(?<title>Action\s[123]:\s.+[.!?])/dg;
     // The rest of these are utility regexes to pull out specific data.
     static abilityNames = /(?<abilityName>\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b)/idg;

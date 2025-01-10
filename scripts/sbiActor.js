@@ -134,9 +134,13 @@ export class sbiActor {
     async setMajorActions(type) {
         // Set the type of action this is.
         let activationType = "";
+        let isLairActionDescriptionOnly = false;
         const isLegendaryTypeAction = type === Blocks.legendaryActions.id || type === Blocks.villainActions.id;
 
-        if (isLegendaryTypeAction) {
+        if (type === Blocks.lairActions.id) {
+            activationType = "lair";
+            isLairActionDescriptionOnly = !this[type].some(a => a.name !== "Description");
+        } else if (isLegendaryTypeAction) {
             activationType = "legendary";
         }
 
@@ -161,17 +165,10 @@ export class sbiActor {
                 if (type === Blocks.lairActions.id) {
                     // Lair actions don't use titles, so it's just one item with all actions included in the description text.
                     // Because of that, we need to assign the type here instead of in the 'else' block below.
-                    let activityId = foundry.utils.randomID();
-                    foundry.utils.setProperty(itemData, `system.activities.${activityId}`, {
-                        _id: activityId, type: "utility",
-                        activation: {type: "lair"}
-                    });
+                    const lairInitiativeCount = actionData.value.lairInitiativeCount || 20;
 
-                    const lairInitiativeCount = actionData.value.lairInitiativeCount;
-                    if (lairInitiativeCount) {
-                        this.set5eProperty("system.resources.lair.value", true);
-                        this.set5eProperty("system.resources.lair.initiative", lairInitiativeCount);
-                    }
+                    this.set5eProperty("system.resources.lair.value", true);
+                    this.set5eProperty("system.resources.lair.initiative", lairInitiativeCount);
                 } else if (isLegendaryTypeAction) {
                     const actionCount = actionData.value.legendaryActionCount || 3;
                     
@@ -180,28 +177,28 @@ export class sbiActor {
                 }
             } else {
                 itemData.name = actionName;
-                foundry.utils.setProperty(itemData, "system.activation.type", activationType);
-
                 let actionCost = actionData.value.actionCost || 1;
 
                 this.setAttackOrSave(actionData, itemData);
                 this.setRecharge(actionData, itemData);
-                
-                if (Object.keys(itemData.system.activities ?? {}).length == 0) {
-                    let activityId = foundry.utils.randomID();
-                    foundry.utils.setProperty(itemData, `system.activities.${activityId}`, {_id: activityId, type: "utility", activation: {type: "action", value: 1}});
-                }
 
                 for (let activityId in itemData.system.activities) {
-                    foundry.utils.setProperty(itemData, `system.activities.${activityId}.activation`, {type: "legendary", value: actionCost});
-                    foundry.utils.setProperty(itemData, `system.activities.${activityId}.consumption`, {
-                        targets: [{
-                            type: "attribute",
-                            target: "resources.legact.value",
-                            value: actionCost
-                        }]
-                    });
+                    foundry.utils.setProperty(itemData, `system.activities.${activityId}.activation`, {type: activationType, value: actionCost});
+                    if (isLegendaryTypeAction) {
+                        foundry.utils.setProperty(itemData, `system.activities.${activityId}.consumption`, {
+                            targets: [{
+                                type: "attribute",
+                                target: "resources.legact.value",
+                                value: actionCost
+                            }]
+                        });
+                    }
                 }
+            }
+
+            if (Object.keys(itemData.system.activities ?? {}).length == 0 && (actionName !== "Description" || isLairActionDescriptionOnly)) {
+                let activityId = foundry.utils.randomID();
+                foundry.utils.setProperty(itemData, `system.activities.${activityId}`, {_id: activityId, type: "utility", activation: {type: activationType, value: 1}});
             }
 
             const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
