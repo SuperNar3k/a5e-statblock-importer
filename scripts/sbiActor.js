@@ -437,13 +437,13 @@ export class sbiActor {
                         sUtils.assignToObject(actorObject, "prototypeToken.sight.range", senseRange);
                         break;
                     case "tremorsense":
-                        sUtils.assignToObject(actorObject, "prototypeToken.detectionModes", (actorObject.prototypeToken.detectionModes || []).concat([{enabled: true, id: "feelTremor", range: senseRange}]));
+                        sUtils.assignToObject(actorObject, "prototypeToken.detectionModes", (actorObject.prototypeToken?.detectionModes || []).concat([{enabled: true, id: "feelTremor", range: senseRange}]));
                         break;
                     case "blindsight":
-                        sUtils.assignToObject(actorObject, "prototypeToken.detectionModes", (actorObject.prototypeToken.detectionModes || []).concat([{enabled: true, id: "blindsight", range: senseRange}]));
+                        sUtils.assignToObject(actorObject, "prototypeToken.detectionModes", (actorObject.prototypeToken?.detectionModes || []).concat([{enabled: true, id: "blindsight", range: senseRange}]));
                         break;
                     case "truesight":
-                        sUtils.assignToObject(actorObject, "prototypeToken.detectionModes", (actorObject.prototypeToken.detectionModes || []).concat([{enabled: true, id: "seeAll", range: senseRange}]));
+                        sUtils.assignToObject(actorObject, "prototypeToken.detectionModes", (actorObject.prototypeToken?.detectionModes || []).concat([{enabled: true, id: "seeAll", range: senseRange}]));
                         break;
                     default:
                         break;
