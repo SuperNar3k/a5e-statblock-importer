@@ -174,7 +174,7 @@ export class sbiActor {
                     actionCost = parseInt(actionCostMatch.groups.cost);
                     itemData.name = itemData.name.slice(0, actionCostMatch.index).trim();
                 }
-
+                
                 this.setAttackOrSave(description, itemData, actor);
                 this.setRecharge(itemData.name, itemData);
                 sUtils.assignToObject(itemData, "system.consume.type", "attribute");
@@ -182,7 +182,7 @@ export class sbiActor {
                 sUtils.assignToObject(itemData, "system.consume.amount", actionCost);
                 sUtils.assignToObject(itemData, "system.activation.cost", actionCost);
 
-                if (type !== BlockID.lairActions && game.system.version > "4") {
+                if (isLegendaryTypeAction && game.system.version > "4") {
                     let activityId = foundry.utils.randomID();
                     sUtils.assignToObject(itemData, `system.activities.${activityId}`, {
                         _id: activityId, type: "utility",
@@ -197,6 +197,20 @@ export class sbiActor {
                     });
                 }
             }
+
+            // Clean up unnecessary activities
+            if (game.system.version > "4") {
+                if (Object.keys(itemData.system.activities || {}).length > 1) {
+                    const cleanedActivities = {};
+                    const activationType = Object.values(itemData.system.activities).find(a => a.type === "utility").activation.type;
+                    Object.values(itemData.system.activities).filter(a => a.type !== "utility").forEach(a => {
+                        sUtils.assignToObject(a, "activation.type", activationType);
+                        cleanedActivities[a._id] = a;
+                    });
+                    itemData.system.activities = cleanedActivities;
+                }
+            }
+
             itemData.img = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
 
             await this.setItemAsync(itemData, actor);
