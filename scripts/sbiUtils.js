@@ -1,5 +1,4 @@
 import { getPacks, MODULE_NAME } from "./sbiConfig.js";
-import { marked } from "../lib/marked.15.0.3.js";
 
 const logPrefix = "5e Statblock Importer |";
 
@@ -29,7 +28,8 @@ export class sbiUtils {
 
     static stripMarkdownAndCleanInput(text) {
         const domParser = new DOMParser();
-        const html = domParser.parseFromString(marked.parse(text), "text/html");
+        const showdownConverter = new showdown.Converter();
+        const html = domParser.parseFromString(showdownConverter.makeHtml(text), "text/html");
         return html.body.innerText
             .split(/[\n\r]+/g)
             .map(str => str.trim())
