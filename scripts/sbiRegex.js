@@ -11,7 +11,8 @@ export class sbiRegex {
     static challenge = /^(challenge|\bcr\b|challenge rating)\s\d+/i;
     static conditionImmunities = /^condition immunities\s/i;
     static damageImmunities = /^damage immunities\s/i;
-    static damageResistances = /^damage resistances\s/i;
+    static immunities2024 = /^immunities\s/i;
+    static damageResistances = /^damage resistances\s|^resistances\s/i;
     static damageVulnerabilities = /^damage vulnerabilities\s/i;
     static health = /^(hit points|\bhp\b)\s\d+/i;
     static lairActions = /^lair actions$/i;
@@ -68,7 +69,7 @@ export class sbiRegex {
     static conditionTypes = /(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)/idg;
     static damageRoll = /\(?(?<damageRoll1>\d+d\d+?)\s?(?<damageMod1>[+-]\s?\d+)?\)? (?<damageType1>\w+)(?: damage)(?:.+(?:plus|and)\s+(?:\d+\s+\(*)?(?:(?<damageRoll2>\d+d\d+?)\s?(?<damageMod2>[+-]\s?\d+)?)\)? (?<damageType2>\w+)(?: damage))?/i;
     static damageTypes = /(?<damageType>\bbludgeoning\b|\bpiercing\b|\bslashing\b|\bacid\b|\bcold\b|\bfire\b|\blightning\b|\bnecrotic\b|\bpoison\b|\bpsychic\b|\bradiant\b|\bthunder\b)/idg;
-    static knownLanguages = /(?<language>\baarakocra\b|\babyssal\b|\baquan\b|\bauran\b|\bcelestial\b|\bcommon\b|\bdeep\b|\bdraconic\b|\bdruidic\b|\bdwarvish\b|\belvish\b|\bgiant\b|\bgith\b|\bgnoll\b|\bgnomish\b|\bgoblin\b|\bhalfling\b|\bignan\b|\binfernal\b|\borc\b|\bprimordial\b|\bsylvan\b|\bterran\b|\bcant\b|\bundercommon\b)/idg;
+    static knownLanguages = /(?:\w+\s*\()?(?<language>\baarakocra\b|\babyssal\b|\baquan\b|\bauran\b|\bcelestial\b|\bcommon\b|\bdeep\b|\bdraconic\b|\bdruidic\b|\bdwarvish\b|\belvish\b|\bgiant\b|\bgith\b|\bgnoll\b|\bgnomish\b|\bgoblin\b|\bhalfling\b|\bignan\b|\binfernal\b|\borc\b|\bprimordial\b|\bsylvan\b|\bterran\b|\bcant\b|\bundercommon\b)\)?/idg;
     static legendaryActionCount = /take (?<count>\d+) legendary/i;
     static nameValue = /(?<name>\w+)\s?(?<value>\d+)/ig;
     static spellcasterLevel = /(?<level>\d+)(.+)level spellcaster/i;
@@ -91,6 +92,7 @@ export class sbiRegex {
         { r: this.challenge, id: BlockID.challenge },
         { r: this.conditionImmunities, id: BlockID.conditionImmunities },
         { r: this.damageImmunities, id: BlockID.damageImmunities },
+        { r: this.immunities2024, id: BlockID.immunities2024 },
         { r: this.damageResistances, id: BlockID.damageResistances },
         { r: this.damageVulnerabilities, id: BlockID.damageVulnerabilities },
         { r: this.health, id: BlockID.health },

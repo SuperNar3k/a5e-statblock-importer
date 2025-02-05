@@ -6,6 +6,7 @@ export class BlockID {
     static challenge = "challenge";
     static conditionImmunities = "conditionImmunities";
     static damageImmunities = "damageImmunities";
+    static immunities2024 = "immunities2024";
     static damageResistances = "damageResistances";
     static damageVulnerabilities = "damageVulnerabilities";
     static features = "features";
@@ -36,6 +37,7 @@ export const BlockName = {
     challenge: "Challenge",
     conditionImmunities: "Condition Immunities",
     damageImmunities: "Damage Immunities",
+    immunities2024: "Immunities",
     damageResistances: "Damage Resistances",
     damageVulnerabilities: "Damage Vulnerabilities",
     features: "Features",
@@ -63,6 +65,7 @@ export const TopBlocks = [
     BlockID.challenge,
     BlockID.conditionImmunities,
     BlockID.damageImmunities,
+    BlockID.immunities2024,
     BlockID.damageResistances,
     BlockID.damageVulnerabilities,
     BlockID.health,

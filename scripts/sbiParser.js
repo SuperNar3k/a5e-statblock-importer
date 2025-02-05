@@ -49,6 +49,11 @@ export class sbiParser {
                     continue;
                 }
 
+                // Ignore lines starting with an asterisk.
+                if (line.startsWith("*")) {
+                    continue;
+                }
+
                 // Get the first block match, excluding the ones we already have
                 const match = sRegex.getFirstMatch(line, [...statBlocks.keys()]);
 
@@ -125,6 +130,7 @@ export class sbiParser {
                         this.setChallenge(value, creature);
                         break;
                     case BlockID.conditionImmunities:
+                    case BlockID.immunities2024:
                         this.setDamagesAndConditions(value, key, creature);
                         break;
                     case BlockID.damageImmunities:
@@ -327,30 +333,18 @@ export class sbiParser {
     // Example: Damage Vulnerabilities bludgeoning, fire
     static setDamagesAndConditions(lines, type, creature) {
         let line = sUtils.combineToString(lines.map(l => l.line));
-        let offset = 0;
+        let lineStartMatch = line.match(/((damage|condition)\s)?(resistances|immunities)/i);
+        line = line.replace(lineStartMatch[0] ?? "", "").trim();
+        let offset = (lineStartMatch[0] ?? "").length + 1;
 
-        // Remove the type name.
-        switch (type) {
-            case DamageConditionId.immunities:
-                line = line.replace(/damage immunities/i, "").trim();
-                offset = "damage immunities".length + 1;
-                break;
-            case DamageConditionId.resistances:
-                line = line.replace(/damage resistances/i, "").trim();
-                offset = "damage resistances".length + 1;
-                break;
-            case DamageConditionId.vulnerabilities:
-                line = line.replace(/damage vulnerabilities/i, "").trim();
-                offset = "damage vulnerabilities".length + 1;
-                break;
-            case BlockID.conditionImmunities:
-                line = line.replace(/condition immunities/i, "").trim();
-                offset = "condition immunities".length + 1;
-                break;
+        let match = [];
+        // Order is important here. Damage types appear first in the block, so we parse them first to keep the order of matches consistent
+        if ([DamageConditionId.immunities, DamageConditionId.resistances, DamageConditionId.vulnerabilities, BlockID.immunities2024].includes(type)) {
+            match = [...match, ...line.matchAll(sRegex.damageTypes)];
         }
-
-        const regex = type === BlockID.conditionImmunities ? sRegex.conditionTypes : sRegex.damageTypes;
-        const match = [...line.matchAll(regex)];
+        if ([BlockID.conditionImmunities, BlockID.immunities2024].includes(type)) {
+            match = [...match, ...line.matchAll(sRegex.conditionTypes)];
+        }
         
         for (let m of match) {
             for (let g in m.indices.groups) {
@@ -367,17 +361,19 @@ export class sbiParser {
         // Now see if there is any custom text we should add.
         let customType = null;
 
-        // Split on ";" first for lines like "poison; bludgeoning, piercing, and slashing from nonmagical attacks"
-        const strings = line.split(";");
+        if (type !== BlockID.immunities2024) {
+            // Split on ";" first for lines like "poison; bludgeoning, piercing, and slashing from nonmagical attacks"
+            const strings = line.split(";");
 
-        if (strings.length === 2) {
-            customType = strings[1].trim();
-        } else {
-            // Handle something like "piercing from magic weapons wielded by good creatures"
-            // by taking out the known types, commas, and spaces, and seeing if there's anything left.
-            const descLeftover = line.replace(regex, "").replace(/,/g, "").trim();
-            if (descLeftover) {
-                customType = descLeftover;
+            if (strings.length === 2) {
+                customType = strings[1].trim();
+            } else {
+                // Handle something like "piercing from magic weapons wielded by good creatures"
+                // by taking out the known types, commas, and spaces, and seeing if there's anything left.
+                const descLeftover = line.replace(sRegex.damageTypes, "").replace(/,/g, "").trim();
+                if (descLeftover) {
+                    customType = descLeftover;
+                }
             }
         }
 
@@ -394,6 +390,10 @@ export class sbiParser {
                     break;
                 case BlockID.conditionImmunities:
                     creature.standardConditionImmunities = knownTypes;
+                    break;
+                case BlockID.immunities2024:
+                    creature.standardDamageImmunities = knownTypes.filter(t => t.match(sRegex.damageTypes));
+                    creature.standardConditionImmunities = knownTypes.filter(t => t.match(sRegex.conditionTypes));
                     break;
             }
         }
@@ -438,7 +438,7 @@ export class sbiParser {
         lines.matchData = match.map(m => m.indices.groups);
         const knownLanguages = match
             .filter(arr => arr[0].length)
-            .map(arr => arr[0].toLowerCase());
+            .map(arr => arr.groups.language.toLowerCase());
         const unknownLanguages = line.replaceAll(regex, "").replaceAll(/(,\s)+/g, ";").replaceAll(/,,+/g, ";").replace(/^;/, "").split(";").filter(l => l).map(lang => sUtils.capitalizeFirstLetter(lang));
         creature.language = new LanguageData(knownLanguages, unknownLanguages);
     }
@@ -652,6 +652,7 @@ export class sbiParser {
                 const spellNames = spellBlock.value
                     .slice(match.index + match[0].length, lastIndex)
                     .split(/,(?![^\(]*\))/) // split on commas that are outside of parenthesis
+                    .map(spell => spell.replaceAll("*", "")) // remove asterisks
                     .map(spell => spell.trim()) // remove spaces
                     .map(spell => sUtils.trimStringEnd(spell, ".")) // remove end period
                     .map(spell => spell.replace(/(\s[ABR]|\s?\+)$/, "")) // remove MCDM activation symbols
