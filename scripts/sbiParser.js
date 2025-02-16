@@ -333,7 +333,7 @@ export class sbiParser {
     // Example: Damage Vulnerabilities bludgeoning, fire
     static setDamagesAndConditions(lines, type, creature) {
         let line = sUtils.combineToString(lines.map(l => l.line));
-        let lineStartMatch = line.match(/((damage|condition)\s)?(resistances|immunities)/i);
+        let lineStartMatch = line.match(/((damage|condition)\s)?(resistances|vulnerabilities|immunities)/i);
         line = line.replace(lineStartMatch[0] ?? "", "").trim();
         let offset = (lineStartMatch[0] ?? "").length + 1;
 
