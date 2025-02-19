@@ -370,7 +370,7 @@ export class sbiParser {
             } else {
                 // Handle something like "piercing from magic weapons wielded by good creatures"
                 // by taking out the known types, commas, and spaces, and seeing if there's anything left.
-                const descLeftover = line.replace(sRegex.damageTypes, "").replace(/,/g, "").trim();
+                const descLeftover = line.replace(type === BlockID.conditionImmunities ? sRegex.conditionTypes : sRegex.damageTypes, "").replace(/,/g, "").trim();
                 if (descLeftover) {
                     customType = descLeftover;
                 }

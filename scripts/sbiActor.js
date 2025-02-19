@@ -1068,7 +1068,7 @@ export class sbiActor {
             sUtils.assignToObject(itemData, "system.target.units", "ft");
 
             if (game.system.version > "4") {
-                let saveActivityId = Object.values(itemData.system.activities).find(a => a.type == "save")._id;
+                let saveActivityId = Object.values(itemData.system.activities || {}).find(a => a.type == "save")?._id;
                 if (saveActivityId) {
                     sUtils.assignToObject(itemData, `system.activities.${saveActivityId}.target.template.size`, match.groups.range);
                     sUtils.assignToObject(itemData, `system.activities.${saveActivityId}.target.template.type`, match.groups.shape);
