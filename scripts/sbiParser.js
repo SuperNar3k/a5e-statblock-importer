@@ -674,13 +674,13 @@ export class sbiParser {
         if (damageRollMatch) {
             actionData.value.damage = {
                 damageRoll: damageRollMatch.groups.baseDamageRoll,
-                damageType: damageRollMatch.groups.baseDamageType,
+                damageType: damageRollMatch.groups.baseDamageType?.toLowerCase(),
                 damageMod: damageRollMatch.groups.baseDamageMod?.replace(/[+\s]/g, ""),
                 plusDamageRoll: damageRollMatch.groups.addDamageRoll,
-                plusDamageType: damageRollMatch.groups.addDamageType,
+                plusDamageType: damageRollMatch.groups.addDamageType?.toLowerCase(),
                 plusDamageMod: damageRollMatch.groups.addDamageMod?.replace(/[+\s]/g, ""),
                 versatileDamageRoll: damageRollMatch.groups.versatileDamageRoll,
-                versatileDamageType: damageRollMatch.groups.versatileDamageType,
+                versatileDamageType: damageRollMatch.groups.versatileDamageType?.toLowerCase(),
                 versatileDamageMod: damageRollMatch.groups.versatileDamageMod?.replace(/[+\s]/g, ""),
             }
         }
