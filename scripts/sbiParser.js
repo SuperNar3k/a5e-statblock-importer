@@ -171,7 +171,7 @@ export class sbiParser {
         }
     }
 
-    // Takes an array of lines ([{lineNumber: n, line: "Line Text"}]) (I need to remember to make it an actual class for clarity)
+    // Takes an array of lines ([{lineNumber: n, line: "Line Text"}]) (I should probably make it an actual class for clarity)
     // Matches the joined lines on a regex, then adds match index information on any line that had any regex group matched
     static matchAndAnnotate(lines, regex, start = 0, end = Infinity) {
         if (!Array.isArray(lines)) {
@@ -179,14 +179,16 @@ export class sbiParser {
         }
         const text = sUtils.combineToString(lines.map(l => l.line));
         const matches = [...text.substring(start, end).matchAll(regex)];
-
         for (let match of matches) {
             const matchData = match.indices?.groups;
+            for (const key in matchData) {
+                if (matchData[key]) {
+                    matchData[key][0] += start;
+                    matchData[key][1] += start;
+                }
+            }
             // We filter out any entry without a valid array of two indices, and we sort
             const orderedMatches = Object.entries(matchData || {}).filter(e => e[1]?.length == 2).sort((a, b) => a[1][0] - b[1][0]).map(m => ({label: m[0], indices: m[1]}));
-            orderedMatches.forEach(m => {
-                m.indices = m.indices.map(i => i + start);
-            });
             for (let m=0; m<orderedMatches.length; m++) {
                 // For each match, we go line by line (keeping track of the total length) until we find the applicable line.
                 let length = 0;
@@ -213,7 +215,6 @@ export class sbiParser {
     static parseAbilities(lines) {
 
         // Check for standard abilities first.
-        ////////////////////////////////////////////////
         const foundAbilityNames = [];
         const foundAbilityValues = [];
         const savingThrows24Data = [];
@@ -576,10 +577,9 @@ export class sbiParser {
 
         if (type === Blocks.features.id) {
             for (const actionData of this.getBlockDatas(lines)) {
-                const nameLower = actionData.name.toLowerCase();
-
                 // e.g. "Spellcasting", "Innate Spellcasting", "Innate Spellcasting (Psionics)"
-                if (/^(innate )?spellcasting( \([^)]+\))?$/i.exec(nameLower)) {
+                const isSpellcasting = !!/^(innate )?spellcasting( \([^)\/]+\))?$/i.test(actionData.value.lines[0].line);
+                if (isSpellcasting) {
                     const { spellcastingType, spellcastingDetails, spellInfo } = this.getSpells(actionData);
                     this.actor[spellcastingType] = {featureName: actionData.name, spellcastingDetails, spellInfo};
                 } else {
@@ -608,7 +608,8 @@ export class sbiParser {
 
         const typeActions = Array.isArray(this.actor[type]) ? this.actor[type] : [];
         for (const actionData of typeActions) {
-            if (!actionData.name.toLowerCase().includes("spellcasting")) {
+            const isSpellcasting = /^(innate )?spellcasting( \([^)\/]+\))?$/i.test(actionData.value.lines[0].line);
+            if (!isSpellcasting) {
                 this.parseAttackOrSave(actionData);
                 this.parsePerDay(actionData);
                 this.parseRange(actionData);
@@ -627,7 +628,7 @@ export class sbiParser {
             // How many legendary actions can it take?
             const legendaryActionMatch = this.matchAndAnnotate(actionData.value.lines, sRegex.legendaryActionCount)?.[0];
             if (legendaryActionMatch) {
-                actionData.value.legendaryActionCount = parseInt(legendaryActionMatch.groups.count);
+                actionData.value.legendaryActionCount = parseInt(legendaryActionMatch.groups.count || legendaryActionMatch.groups.uses);
             }
             // What iniative count does the lair action activate?
             const lairInitiativeMatch = this.matchAndAnnotate(actionData.value.lines, sRegex.lairInitiativeCount)?.[0];
@@ -743,8 +744,8 @@ export class sbiParser {
 
         const spellMatches = this.matchAndAnnotate(actionData.value.lines, sRegex.castActionSpell, match.indices.groups.spellList[0], match.indices.groups.spellList[1]);
 
-        const spellNames = spellMatches.map(sm => sm.groups.spellName);
-        actionData.value.castSpells = spellNames;
+        const spells = spellMatches.map(sm => ({name: sm.groups.spellName, level: sm.groups.spellLevel}));
+        actionData.value.castSpells = spells;
     }
 
     // Example: The hound exhales a 15-foot cone of frost.
@@ -839,61 +840,56 @@ export class sbiParser {
     static getSpells(spellBlock) {
         let spellRegex = sRegex.spellInnateLine;
         let spellcastingType = "innateSpellcasting";
-        let spellMatches = this.matchAndAnnotate(spellBlock.value.lines, spellRegex);
+        let spellHeaderMatches = this.matchAndAnnotate(spellBlock.value.lines, spellRegex);
 
-        if (!spellMatches.length) {
+        if (!spellHeaderMatches.length) {
             spellRegex = sRegex.spellLine;
             spellcastingType = "spellcasting";
-            spellMatches = this.matchAndAnnotate(spellBlock.value.lines, spellRegex);
+            spellHeaderMatches = this.matchAndAnnotate(spellBlock.value.lines, spellRegex);
         }
 
-        const spellGroups = [];
+        let spellGroups = [];
 
-        if (spellMatches.length) {
+        if (spellHeaderMatches.length) {
             let introDescription = sUtils.combineToString(spellBlock.value.lines.map(l => l.line))
                 .replace(/\n/g, " ")
+                .slice(0, spellHeaderMatches[0].index)
                 .trim();
-            
-            spellGroups.push(new NameValueData("Description", introDescription));
 
-            const spellNameMatches = this.matchAndAnnotate(spellBlock.value.lines, sRegex.spellName);
+            const spellGroupMatches = this.matchAndAnnotate(spellBlock.value.lines, sRegex.spellGroup);
 
-            if (spellNameMatches.length) {
+            spellGroupMatches.forEach((spellGroupMatch, i) => {
+                const nextSpellGroupMatch = spellGroupMatches[i+1];
+                const spellListStart = spellGroupMatch.indices[0][1];
+                const spellListEnd = nextSpellGroupMatch?.indices[0][0] || Infinity;
+                const spellGroup = new NameValueData(spellGroupMatch.groups.spellGroup, []);
+                const spellNameMatches = this.matchAndAnnotate(spellBlock.value.lines, sRegex.spellName, spellListStart, spellListEnd);
                 let spellType, spellCount, spellLevel;
-                for (let spellMatch of spellNameMatches) {
+                for (const spellMatch of spellNameMatches) {
                     spellLevel = undefined;
                     let spellName = sUtils.capitalizeAll(spellMatch.groups.spellName).replace(/\(.*\)/, "").trim();
                     if (spellMatch.groups.spellLevel) {
                         spellLevel = parseInt(spellMatch.groups.spellLevel);
                     }
-                    if (spellMatch.groups.spellGroup) {
-                        if (spellMatch.groups.slots) {
-                            spellType = "slots";
-                            spellCount = parseInt(spellMatch.groups.slots);
-                        } else if (spellMatch.groups.perDay) {
-                            spellType = "innate";
-                            spellCount = parseInt(spellMatch.groups.perDay);
-                        } else if (spellMatch.groups.spellGroup.toLowerCase().includes("at will")) {
-                            spellType = spellcastingType === "spellcasting" ? "cantrip" : "at will";
-                        }
-                        spellGroups.push(new NameValueData(spellMatch.groups.spellGroup, [{name: spellName, type: spellType, count: spellCount, level: spellLevel}]));
-                    } else if (spellType) {
-                        spellGroups[spellGroups.length - 1].value.push({name: spellName, type: spellType, count: spellCount, level: spellLevel});
+                    if (spellGroupMatch.groups.slots) {
+                        spellType = "slots";
+                        spellCount = parseInt(spellGroupMatch.groups.slots);
+                    } else if (spellGroupMatch.groups.perDay) {
+                        spellType = "innate";
+                        spellCount = parseInt(spellGroupMatch.groups.perDay);
+                    } else if (spellGroupMatch.groups.spellGroup.toLowerCase().includes("at will")) {
+                        spellType = spellcastingType === "spellcasting" ? "cantrip" : "at will";
                     }
+                    spellGroup.value.push({name: spellName, type: spellType, count: spellCount, level: spellLevel});
                     // Special info for Mage Armor (included in AC), so we can calculate later
                     if (spellName === "Mage Armor" && spellMatch.groups.affectsAC) {
                         this.actor.armor.types.push("mage");
                     }
                 }
-                introDescription = introDescription.slice(0, spellMatches[0].index);
-            } else {
-                // Some spell casting description bury the spell in the description, like Mehpits.
-                // Example: The mephit can innately cast fog cloud, requiring no material components.
-                const spellInnateSingleMatch = this.matchAndAnnotate(spellBlock.value.lines, sRegex.spellInnateSingle)?.[0];
-                if (spellInnateSingleMatch) {
-                    spellGroups.push(new NameValueData(spellInnateSingleMatch.groups.perDay + "/day", [{name: spellInnateSingleMatch.groups.spellName, type: "innate", count: parseInt(spellInnateSingleMatch.groups.perDay)}]));
-                }
-            }
+                spellGroups.push(spellGroup);
+            });
+
+            spellGroups = [new NameValueData("Description", introDescription), ...spellGroups];
         }
 
         const spellcastingDetailsMatches = this.matchAndAnnotate(spellBlock.value.lines, sRegex.spellcastingDetails);

@@ -44,7 +44,7 @@ export class sbiRegex {
     static initiativeDetails = new RegExp(this.initiativeDetailsBase, "idg");
     static perDayBase = "(?<perDay>\\d+)\\\/day";
     static perDayDetails = new RegExp(this.perDayBase, "idg");
-    static perDayCountFull = new RegExp(`\\(${this.perDayBase}[\\);]`, "idg");
+    static perDayCountFull = new RegExp(`\\(${this.perDayBase}[\\),;]`, "idg");
     static rollDetails = /(?<value>\d+)\s?(\((?<formula>\d+d\d+(\s?[\+\-−–]\s?\d+)?)\))?/idg;
     static savingThrowDetails = /must\s(make|succeed\son)\sa\sdc\s(?<saveDc>\d+)\s(?<saveAbility>\w+)\s(?<saveText>saving\sthrow|save)(?:.*(?<halfDamage>\bhalf\b)[A-Z\s]*damage)?/idg;
     static savingThrowDetails24 = /(?<saveAbility>\w+)\s(?<saveText>saving throw):\s*dc\s(?<saveDc>\d+)(?:.*success:\s(?<halfDamage>\bhalf\b))?/idg;
@@ -72,18 +72,18 @@ export class sbiRegex {
     static actionCost = /\((costs )?(?<cost>\d+) action(s)?\)/idg;
     static attack = /\+(?<toHit>\d+)\sto\shit/idg;
     static attack24 = /attack\sroll:\s*\+(?<toHit>\d+)/idg;
-    static castAction = /^(?<featureName>[^.]+)\.\s?(?<monsterDesc>(?:\w+\s){1,4})\bcasts\s(?!a\s)(?<spellList>.*?),?\s?(?:in response|using|\.)/idg;
-    static castActionSpell = /(?<=^|,|\bor\s)\s?(?:(?:or\s)?(?<spellName>\b(?:[^,.:;](?!or))+))/idg;
+    static castAction = /^(?<featureName>[^.]+)\.\s?(?<monsterDesc>(?:\w+\s){1,4})(?:\bcasts|\bcan innately cast|\bspellcasting to cast)\s(?!a\s)(?<spellList>.*?),?\s?(?:in response|using|requiring|\.)/idg;
+    static castActionSpell = /(?<=^|,|\bor\s)\s?(?:(?:or\s)?(?<spellName>\b(?:[^,.:;](?!or|\())+)(?:\s\(level\s(?<spellLevel>\d+)\sversion\))?)/idg;
     static conditionTypes = /(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)/idg;
     static damageRoll = /\(?(?<baseDamageRoll>\d+d\d+?)\s?(?<baseDamageMod>[+-]\s?\d+)?\)?\s(?<baseDamageType>\w+)(?:\sdamage)(?:.+(?:(?:\bor\s+(?:\d+\s+\(*)?(?:(?<versatileDamageRoll>\d+d\d+?)\s?(?<versatileDamageMod>[+-]\s?\d+)?)\)?\s(?<versatileDamageType>\w+)(?:\sdamage\sif\sused\swith\stwo\shands))|(?:plus|and)\s+(?:\d+\s+\(*)?(?:(?<addDamageRoll>\d+d\d+?)\s?(?<addDamageMod>[+-]\s?\d+)?)\)?\s(?<addDamageType>\w+)(?:\sdamage)))?/idg
     static damageTypes = /(?<damageType>\bbludgeoning\b|\bpiercing\b|\bslashing\b|\bacid\b|\bcold\b|\bfire\b|\blightning\b|\bnecrotic\b|\bpoison\b|\bpsychic\b|\bradiant\b|\bthunder\b)/idg;
     static knownLanguages = /(?:\w+\s*\()?(?<language>\baarakocra\b|\babyssal\b|\baquan\b|\bauran\b|\bcelestial\b|\bcommon\b|\bdeep\b|\bdraconic\b|\bdruidic\b|\bdwarvish\b|\belvish\b|\bgiant\b|\bgith\b|\bgnoll\b|\bgnomish\b|\bgoblin\b|\bhalfling\b|\bignan\b|\binfernal\b|\borc\b|\bprimordial\b|\bsylvan\b|\bterran\b|\bcant\b|\bundercommon\b|\btelepathy\s(?<telepathyRange>\d+)\s(f(ee|oo)?t\.?|'|’))\)?/idg;
-    static legendaryActionCount = /take\s(?<count>\d+)\slegendary/idg;
+    static legendaryActionCount = /take\s(?<count>\d+)\slegendary|legendary\saction\suses:\s?(?<uses>\d+)(?:\s?\((?<lairUses>\d+)\sin\slair\))?\s*\./idg;
     static lairInitiativeCount = /initiative\scount\s(?<initiativeCount>\d+)/idg;
-    static spellGroupHeader = "at.will|cantrips|(?<perDay>\\d+)\\/day(?: each)?|1st|2nd|3rd|4th|5th|6th|7th|8th|9th";
-    static spellGroupHeaderNoPerDay = this.spellGroupHeader.replace("?<perDay>", "");
-    // Good luck modifying this one (I'll break this one down too sooner or later)
-    static spellName = new RegExp(`(?<=,|(?<spellGroup>(?:${this.spellGroupHeader})(?:[\\w\\s\\(-]*(?:(?<slots>\\d+) slot|at.will)[^:]*)?):)\\s*[*\\s]*(?<spellName>(?:[^.,:](?!${this.spellGroupHeaderNoPerDay}))+?)(?:\\s\\(level\\s(?<spellLevel>\\d+)[^)]*\\))?(?:\\s\\((?<affectsAC>included in ac)\\))?[*\\s]*(\\s[ABR]|\\s?\\+)?(?:\\s*\\(.*?\\)\\s*)?(?=,|[\\s.:]*$|\\s+(${this.spellGroupHeaderNoPerDay}))`, "idg");
+    
+    static spellGroup = /(?<spellGroup>(?:cantrips|at.will|(?<level>\d+)(?:st|nd|rd|th)\slevel|(?<perDay>\d+)\/day)\s?(?:each)?(?:\s?\((?:(?<slots>\d+)\sslots?|at.will)\))?):\s?/idg;
+    static spellName = /(?<=^|,)\s*[*\s]*(?<spellName>[^.,:]+?)(?:\s\(level\s(?<spellLevel>\d+)[^)]*\))?(?:\s\((?<affectsAC>included in ac)\))?[*\s]*(\s[ABR]|\s?\+)?(?:\s*\(.*?\)\s*)?(?=,|[\s.:]*$)/idg;
+    
     static spellLine = /(at-will|cantrips|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)[\w\s\(\)-]*:/ig;
     static spellInnateLine = /at will:|\d\/day( each)?/ig;
     static spellInnateSingle = /(?<perDay>\d+)\/day.*innately\scast\s(?<spellName>[\w|\s]+)(\s\(.+\))?,/idg;
