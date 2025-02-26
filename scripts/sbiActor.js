@@ -1085,10 +1085,10 @@ export class sbiActor {
 
         if (match) {
             const damageRoll = match.groups.damageRoll1;
-            const damageType = match.groups.damageType1;
+            const damageType = match.groups.damageType1?.toLowerCase();
             const hasDamageMod = match.groups.damageMod1 != undefined;
             const plusDamageRoll = match.groups.damageRoll2;
-            const plusDamageType = match.groups.damageType2;
+            const plusDamageType = match.groups.damageType2?.toLowerCase();
             const plusHasDamageMod = match.groups.damageMod2 != undefined;
 
             // Set the damage rolls and types. I've never seen more than two damage rolls for one attack.
