@@ -168,6 +168,7 @@ export class sbiUtils {
         if (item) {
             const itemDoc = await pack.getDocument(item._id);
             result = itemDoc.toObject();
+            result.sourceUuid = itemDoc.uuid;
         }
 
         return result;

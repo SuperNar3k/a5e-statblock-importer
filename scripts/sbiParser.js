@@ -55,6 +55,11 @@ export class sbiParser {
                     continue;
                 }
 
+                // Ignore lines starting with an asterisk.
+                if (line.startsWith("*")) {
+                    continue;
+                }
+
                 // Get the first block match, excluding the ones we already have
                 const match = this.getFirstMatch(line, [...this.statBlocks.keys()]);
 
@@ -120,22 +125,23 @@ export class sbiParser {
                         break;
                     case Blocks.challenge.id:
                         this.parseChallenge(blockData);
-                        break;
+                        break;                    
                     case Blocks.conditionImmunities.id:
-                        this.parseDamagesAndConditions(blockData, blockId);
-                        break;
                     case Blocks.damageImmunities.id:
-                        this.parseDamagesAndConditions(blockData, DamageConditionId.immunities);
-                        break;
+                    case Blocks.immunities2024.id:
                     case Blocks.damageResistances.id:
-                        this.parseDamagesAndConditions(blockData, DamageConditionId.resistances);
-                        break;
                     case Blocks.damageVulnerabilities.id:
-                        this.parseDamagesAndConditions(blockData, DamageConditionId.vulnerabilities);
+                        this.parseDamagesAndConditions(blockData, blockId);
                         break;
                     case Blocks.health.id:
                     case Blocks.souls.id:
                         this.parseRoll(blockData, blockId);
+                        break;
+                    case Blocks.gear.id:
+                        this.parseGear(blockData);
+                        break;
+                    case Blocks.initiative.id:
+                        this.parseInitiative(blockData);
                         break;
                     case Blocks.languages.id:
                         this.parseLanguages(blockData);
@@ -167,18 +173,20 @@ export class sbiParser {
 
     // Takes an array of lines ([{lineNumber: n, line: "Line Text"}]) (I need to remember to make it an actual class for clarity)
     // Matches the joined lines on a regex, then adds match index information on any line that had any regex group matched
-    static matchAndAnnotate(lines, regex) {
+    static matchAndAnnotate(lines, regex, start = 0, end = Infinity) {
         if (!Array.isArray(lines)) {
             lines = [lines];
         }
-
         const text = sUtils.combineToString(lines.map(l => l.line));
-        const matches = [...text.matchAll(regex)];
+        const matches = [...text.substring(start, end).matchAll(regex)];
+
         for (let match of matches) {
             const matchData = match.indices?.groups;
             // We filter out any entry without a valid array of two indices, and we sort
             const orderedMatches = Object.entries(matchData || {}).filter(e => e[1]?.length == 2).sort((a, b) => a[1][0] - b[1][0]).map(m => ({label: m[0], indices: m[1]}));
-
+            orderedMatches.forEach(m => {
+                m.indices = m.indices.map(i => i + start);
+            });
             for (let m=0; m<orderedMatches.length; m++) {
                 // For each match, we go line by line (keeping track of the total length) until we find the applicable line.
                 let length = 0;
@@ -265,9 +273,28 @@ export class sbiParser {
         // AC value
         const ac = match.groups.ac;
         // Armor types, like "natural armor" or "leather armor, shield"
-        const armorTypes = match.groups.armorType?.split(",").map(str => str.trim());
+        const armorTypes = match.groups.armorType?.split(",").map(str => str.trim()) || [];
 
-        this.actor.armor = new ArmorData(parseInt(ac), armorTypes);
+        this.actor.armor = new ArmorData(parseInt(ac), armorTypes.filter(t => t === "natural armor"));
+        this.actor.gear.push(...armorTypes.filter(t => t !== "natural armor"));
+
+        if (match.groups.initiativeModifier) {
+            this.actor.initiative = {mod: parseInt(match.groups.initiativeModifier), score: parseInt(match.groups.initiativeScore)};
+        }
+    }
+
+    static parseGear(lines) {
+        const matches = this.matchAndAnnotate(lines, sRegex.gearDetails);
+        if (!matches) return;
+
+        this.actor.gear.push(...matches.map(m => new NameValueData(m.groups.name.toLowerCase(), parseInt(m.groups.quantity || 1))));
+    }
+
+    static parseInitiative(lines) {
+        const match = this.matchAndAnnotate(lines, sRegex.initiativeDetails)?.[0];
+        if (!match) return;
+        
+        this.actor.initiative = {mod: parseInt(match.groups.initiativeModifier), score: parseInt(match.groups.initiativeScore)};
     }
 
     static parseChallenge(lines) {
@@ -300,7 +327,7 @@ export class sbiParser {
     }
 
     // Example: Damage Vulnerabilities bludgeoning, fire
-    static parseDamagesAndConditions(lines, type) {
+    static parseDamagesAndConditionsOld(lines, type) {
         const regex = type === Blocks.conditionImmunities.id ? sRegex.conditionTypes : sRegex.damageTypes;
         const matches = this.matchAndAnnotate(lines, regex);
 
@@ -378,14 +405,86 @@ export class sbiParser {
         }
     }
 
+    // Example: Damage Vulnerabilities bludgeoning, fire
+    static parseDamagesAndConditions(lines, type) {
+        let damageConditionId;
+        switch (type) {
+            case Blocks.damageImmunities.id:
+            case Blocks.conditionImmunities.id:
+            case Blocks.immunities2024.id:
+                damageConditionId = DamageConditionId.immunities;
+                break;
+            case Blocks.damageResistances.id:
+                damageConditionId = DamageConditionId.resistances;
+                break;
+            case Blocks.damageVulnerabilities.id:
+                damageConditionId = DamageConditionId.vulnerabilities;
+                break;
+        }
+        const damageTypes = this.matchAndAnnotate(lines, sRegex.damageTypes)
+            .filter(arr => arr[0].length)
+            .map(arr => arr[0].toLowerCase());
+        const conditionTypes = this.matchAndAnnotate(lines, sRegex.conditionTypes)
+            .filter(arr => arr[0].length)
+            .map(arr => arr[0].toLowerCase());
+
+        let fullLines = sUtils.combineToString(lines.map(l => l.line));
+        // Remove the type name.
+        fullLines = fullLines.replace(/^(damage\s|condition\s)?(immunities|resistances|vulnerabilities)/i, "").trim();
+
+        // Now see if there is any custom text we should add.
+        let customType = null;
+
+        let bypasses = [];
+        // "mundane attacks" is an MCDM thing.
+        if (/nonmagical\sweapons/i.test(fullLines) || /nonmagical\sattacks/i.test(fullLines) || /mundane\sattacks/i.test(fullLines)) {
+            bypasses.push("mgc");
+        }
+        if (fullLines.includes("adamantine")) {
+            bypasses.push("ada");
+        }
+        if (fullLines.includes("silvered")) {
+            bypasses.push("sil");
+        }
+
+        if (bypasses.length === 0) {
+            // If no bypasses have been set, then assume Foundry will take care of setting the special damage text.
+            // Handle something like "piercing from magic weapons wielded by good creatures"
+            // by taking out the known types, commas, and spaces, and seeing if there's anything left.
+            const descLeftover = fullLines
+                .replace(sRegex.damageTypes, "")
+                .replace(sRegex.conditionTypes, "")
+                .replace(/,/g, "")
+                .trim();
+            if (descLeftover) {
+                customType = descLeftover.replace("\n", " ");
+            }
+        }
+
+        if (!this.actor.damagesAndConditions[`damage${sUtils.capitalizeFirstLetter(damageConditionId)}`]) {
+            foundry.utils.setProperty(this.actor, `damagesAndConditions.damage${sUtils.capitalizeFirstLetter(damageConditionId)}`, {types: [], bypasses: [], special: ""});
+        }
+        this.actor.damagesAndConditions[`damage${sUtils.capitalizeFirstLetter(damageConditionId)}`].types.push(...damageTypes);
+        this.actor.damagesAndConditions[`damage${sUtils.capitalizeFirstLetter(damageConditionId)}`].bypasses = bypasses;
+        this.actor.damagesAndConditions[`damage${sUtils.capitalizeFirstLetter(damageConditionId)}`].special = customType;
+
+        if (!this.actor.damagesAndConditions.conditionImmunities) {
+            foundry.utils.setProperty(this.actor, "damagesAndConditions.conditionImmunities", {types: [], special: ""});
+        }
+        this.actor.damagesAndConditions.conditionImmunities.types.push(...conditionTypes);
+    }
+
     static parseLanguages(lines) {
         const regex = sRegex.knownLanguages;
-        const matches = this.matchAndAnnotate(lines, sRegex.knownLanguages);
+        const matches = this.matchAndAnnotate(lines, regex);
         if (!matches) return;
 
         const knownLanguages = matches
-            .filter(arr => arr[0].length)
-            .map(arr => arr[0].toLowerCase());
+            .filter(arr => arr[0].length && !arr[0].includes("telepathy"))
+            .map(arr => arr.groups.language.toLowerCase());
+
+        const telepathy = matches.find(m => m.groups?.telepathyRange)?.groups.telepathyRange;
+        
         const unknownLanguages = sUtils.combineToString(lines.map(l => l.line))
             .replace(/^languages\s*/i, "")
             .replaceAll(regex, "")
@@ -395,7 +494,7 @@ export class sbiParser {
             .split(";")
             .filter(l => l);
 
-        this.actor.language = new LanguageData(knownLanguages, unknownLanguages);
+        this.actor.language = new LanguageData(knownLanguages, unknownLanguages, telepathy);
     }
 
     static parseRacialDetails(lines) {
@@ -482,7 +581,7 @@ export class sbiParser {
                 // e.g. "Spellcasting", "Innate Spellcasting", "Innate Spellcasting (Psionics)"
                 if (/^(innate )?spellcasting( \([^)]+\))?$/i.exec(nameLower)) {
                     const { spellcastingType, spellcastingDetails, spellInfo } = this.getSpells(actionData);
-                    this.actor[spellcastingType] = {spellcastingDetails, spellInfo};
+                    this.actor[spellcastingType] = {featureName: actionData.name, spellcastingDetails, spellInfo};
                 } else {
                     this.actor[Blocks.features.id].push(actionData);
                 }
@@ -493,7 +592,7 @@ export class sbiParser {
             // There should only be one block under the Utility Spells title.
             if (spellDatas.length === 1) {
                 let { spellcastingDetails, spellInfo } = this.getSpells(spellDatas[0]);
-                this.actor.utilitySpells = {spellcastingDetails, spellInfo};
+                this.actor.utilitySpells = {featureName: spellDatas[0].name, spellcastingDetails, spellInfo};
             }
         } else {
             let blockDatas = this.getBlockDatas(lines);
@@ -502,7 +601,7 @@ export class sbiParser {
             if (spellcastingOutsideFeatures) {
                 blockDatas = blockDatas.filter(b => b.name !== spellcastingOutsideFeatures.name);
                 let { spellcastingDetails, spellInfo } = this.getSpells(spellcastingOutsideFeatures);
-                this.actor.innateSpellcasting = {spellcastingDetails, spellInfo};
+                this.actor.innateSpellcasting = {featureName: "Spellcasting", spellcastingDetails, spellInfo};
             }
             this.actor[type] = blockDatas;
         }
@@ -518,6 +617,7 @@ export class sbiParser {
                 this.parseTarget(actionData);
                 this.parseMajorFeatureInfo(actionData);
                 this.parseSpellAction(actionData);
+                this.parseCastAction(actionData);
             }
         }
     }
@@ -558,8 +658,8 @@ export class sbiParser {
     // Dexterity saving throw, taking 44(8d10) cold damage on a failed save or half as much damage on a successful one.
     static parseAttackOrSave(actionData) {
         // Some attacks include a saving throw, so we'll just check for both attack rolls and saving throw rolls
-        const saveMatch = this.matchAndAnnotate(actionData.value.lines, sRegex.savingThrowDetails)?.[0] || this.matchAndAnnotate(actionData.value, sRegex.savingThrowDetails24)?.[0];
-        const attackMatch = this.matchAndAnnotate(actionData.value.lines, sRegex.attack)?.[0] || this.matchAndAnnotate(actionData.value, sRegex.attack24)?.[0];
+        const saveMatch = this.matchAndAnnotate(actionData.value.lines, sRegex.savingThrowDetails)?.[0] || this.matchAndAnnotate(actionData.value.lines, sRegex.savingThrowDetails24)?.[0];
+        const attackMatch = this.matchAndAnnotate(actionData.value.lines, sRegex.attack)?.[0] || this.matchAndAnnotate(actionData.value.lines, sRegex.attack24)?.[0];
         if (saveMatch) {
             actionData.value.save = {
                 dc: saveMatch.groups.saveDc,
@@ -626,9 +726,25 @@ export class sbiParser {
 
     // Example: Naughty Mousey (3/Day; 5th-Level Spell; Concentration).
     static parseSpellAction(actionData) {
-        const match = this.matchAndAnnotate(actionData.value.lines, sRegex.spellActionTItle)?.[0];
+        const match = this.matchAndAnnotate(actionData.value.lines, sRegex.spellActionTitle)?.[0];
         if (!match || (!match.groups.spellLevel && !match.groups.concentration)) return;
         actionData.value.spell = {level: match.groups.spellLevel, concentration: !!match.groups.concentration};
+    }
+
+    // Example: Misty Step (3/Day). The mage casts Misty Step, using the same spellcasting ability as Spellcasting.
+    static parseCastAction(actionData) {
+        let lines = actionData.value.lines;
+        if (!Array.isArray(lines)) {
+            lines = [lines];
+        }
+        const text = sUtils.combineToString(lines.map(l => l.line));
+        const match = [...text.matchAll(sRegex.castAction)]?.[0];
+        if (!match) return;
+
+        const spellMatches = this.matchAndAnnotate(actionData.value.lines, sRegex.castActionSpell, match.indices.groups.spellList[0], match.indices.groups.spellList[1]);
+
+        const spellNames = spellMatches.map(sm => sm.groups.spellName);
+        actionData.value.castSpells = spellNames;
     }
 
     // Example: The hound exhales a 15-foot cone of frost.
@@ -743,9 +859,13 @@ export class sbiParser {
             const spellNameMatches = this.matchAndAnnotate(spellBlock.value.lines, sRegex.spellName);
 
             if (spellNameMatches.length) {
-                let spellType, spellCount;
+                let spellType, spellCount, spellLevel;
                 for (let spellMatch of spellNameMatches) {
+                    spellLevel = undefined;
                     let spellName = sUtils.capitalizeAll(spellMatch.groups.spellName).replace(/\(.*\)/, "").trim();
+                    if (spellMatch.groups.spellLevel) {
+                        spellLevel = parseInt(spellMatch.groups.spellLevel);
+                    }
                     if (spellMatch.groups.spellGroup) {
                         if (spellMatch.groups.slots) {
                             spellType = "slots";
@@ -756,9 +876,13 @@ export class sbiParser {
                         } else if (spellMatch.groups.spellGroup.toLowerCase().includes("at will")) {
                             spellType = spellcastingType === "spellcasting" ? "cantrip" : "at will";
                         }
-                        spellGroups.push(new NameValueData(spellMatch.groups.spellGroup, [{name: spellName, type: spellType, count: spellCount}]));
+                        spellGroups.push(new NameValueData(spellMatch.groups.spellGroup, [{name: spellName, type: spellType, count: spellCount, level: spellLevel}]));
                     } else if (spellType) {
-                        spellGroups[spellGroups.length - 1].value.push({name: spellName, type: spellType, count: spellCount});
+                        spellGroups[spellGroups.length - 1].value.push({name: spellName, type: spellType, count: spellCount, level: spellLevel});
+                    }
+                    // Special info for Mage Armor (included in AC), so we can calculate later
+                    if (spellName === "Mage Armor" && spellMatch.groups.affectsAC) {
+                        this.actor.armor.types.push("mage");
                     }
                 }
                 introDescription = introDescription.slice(0, spellMatches[0].index);

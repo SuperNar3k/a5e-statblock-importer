@@ -6,10 +6,13 @@ export const Blocks = {
     challenge: {id: "challenge", name: "Challenge", top: true},
     conditionImmunities: {id: "conditionImmunities", name: "Condition Immunities", top: true},
     damageImmunities: {id: "damageImmunities", name: "Damage Immunities", top: true},
+    immunities2024: {id: "immunities2024", name: "Immunities", top: true},
     damageResistances: {id: "damageResistances", name: "Damage Resistances", top: true},
     damageVulnerabilities: {id: "damageVulnerabilities", name: "Damage Vulnerabilities", top: true},
     features: {id: "features", name: "Features"},
+    gear: {id: "gear", name: "Gear", top: true},
     health: {id: "health", name: "Health", top: true},
+    initiative: {id: "initiative", name: "Initiative", top: true},
     lairActions: {id: "lairActions", name: "Lair Actions"},
     languages: {id: "languages", name: "Languages", top: true},
     legendaryActions: {id: "legendaryActions", name: "Legendary Actions"},
@@ -98,11 +101,13 @@ export class RollData {
 /*
 knownLanguages: string[]
 unknownLanguages: string[]
+telepathy: int
 */
 export class LanguageData {
-    constructor(knownLanguages, unknownLanguages) {
+    constructor(knownLanguages, unknownLanguages, telepathy) {
         this.knownLanguages = knownLanguages;
         this.unknownLanguages = unknownLanguages;
+        this.telepathy = telepathy;
     }
 }
 

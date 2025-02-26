@@ -1,5 +1,6 @@
 import { sbiUtils as sUtils } from "./sbiUtils.js";
 import { Blocks } from "./sbiData.js";
+import { MODULE_NAME } from "./sbiConfig.js";
 
 export class sbiActor {
     #dnd5e = {};
@@ -13,7 +14,9 @@ export class sbiActor {
         this.bonusActions = [];                     // NameValueData[]
         this.challenge = null;                      // ChallengeData
         this.features = [];                         // NameValueData[]
+        this.gear = [];                             // NameValueData[]
         this.health = null;                         // RollData
+        this.initiative = null;                     // object
         this.language = null;                       // LanguageData
         this.lairActions = [];                      // NameValueData[]
         this.legendaryActions = [];                 // NameValueData[]
@@ -33,14 +36,7 @@ export class sbiActor {
         this.type = null;                           // string
         this.utilitySpells = {};                    // {object, NameValueData[]} (MCDM)
         this.villainActions = [];                   // NameValueData[]           (MCDM)
-        this.standardConditionImmunities = [];      // string[]
-        this.standardDamageImmunities = [];         // string[]
-        this.standardDamageResistances = [];        // string[]
-        this.standardDamageVulnerabilities = [];    // string[]
-        this.specialConditionImmunities = null;     // string
-        this.specialDamageImmunities = null;        // string
-        this.specialDamageResistances = null;       // string
-        this.specialDamageVulnerabilities = null;   // string
+        this.damagesAndConditions = {}              // object
     }
 
     get actorData() {
@@ -50,6 +46,7 @@ export class sbiActor {
     async updateActorData() {
         this.setAbilities();
         this.setChallenge();
+        this.setInitiative();
         await this.setSpells();
         await this.setActions();
         await this.setMajorActions(Blocks.legendaryActions.id);
@@ -57,6 +54,7 @@ export class sbiActor {
         await this.setMajorActions(Blocks.villainActions.id);
         await this.setMinorActions(Blocks.bonusActions.id);
         await this.setMinorActions(Blocks.reactions.id);
+        await this.setGear();
         await this.setArmor();
         this.setDamagesAndConditions();
         await this.setFeatures();
@@ -115,6 +113,7 @@ export class sbiActor {
             this.setPerDay(actionData, itemData);
             this.setRecharge(actionData, itemData);
             this.setTarget(actionData, itemData);
+            await this.setCastSpells(actionData, itemData);
 
             if (actionData.value.spell) {
                 itemData.type = "spell";
@@ -240,6 +239,7 @@ export class sbiActor {
 
             this.setPerDay(actionData, itemData);
             this.setRecharge(actionData, itemData);
+            await this.setCastSpells(actionData, itemData);
 
             const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
             if (matchingImage) itemData.img = matchingImage;
@@ -429,6 +429,62 @@ export class sbiActor {
         }
     }
 
+    async fetchSpellByName(spellName) {
+        let spell = await sUtils.getItemFromPacksAsync(spellName, "spell");
+        if (!spell) {
+            this.missingSpells.push(spellName);
+            const activityId = foundry.utils.randomID();
+            spell = {
+                name: spellName,
+                type: "spell",
+                system: {
+                    activities: {
+                        [activityId]: {_id: activityId, type: "utility", activation: {type: "action", value: 1}}
+                    }
+                }
+            };
+        }
+        if (spell.system.source?.rules === "2014" && game.settings.get("dnd5e", "rulesVersion") !== "legacy") {
+            this.obsoleteSpells.push(spellName);
+        }
+        return spell;
+    }
+
+    async setCastSpells(actionData, itemData) {
+        for (const spellName of actionData.value.castSpells || []) {
+            console.log("CAST SPELLS");
+            const spell = await this.fetchSpellByName(spellName);
+            const castActivity = {
+                _id: foundry.utils.randomID(),
+                type: "cast",
+                spell: {
+                    uuid: spell.sourceUuid,
+                    level: spell.system.level,
+                    spellbook: false, // this will be updated after the actor is created
+                }
+            };
+            if (actionData.value.perDay) {
+                foundry.utils.setProperty(castActivity, "consumption.targets", [{
+                    type: "activityUses",
+                    value: 1
+                }]);
+                foundry.utils.setProperty(castActivity, "uses.max", "" + actionData.value.perDay);
+                foundry.utils.setProperty(castActivity, "uses.recovery", [{period: "day", type: "recoverAll"}]);
+            }
+            let singleUtilityActivity;
+            if (Object.values(itemData.system.activities).length === 1 && Object.values(itemData.system.activities)[0].type === "utility") {
+                singleUtilityActivity = Object.values(itemData.system.activities)[0];
+            }
+            if (singleUtilityActivity) {
+                foundry.utils.setProperty(castActivity, "activation", singleUtilityActivity.activation);
+                itemData.system.activities = {};
+            }
+            if (!Object.values(itemData.system?.activities || {}).find(a => a.name === spell.name)) {
+                foundry.utils.setProperty(itemData, `system.activities.${castActivity._id}`, castActivity);
+            }
+        }
+    }
+
     setPerDay(actionData, itemData) {
         if (actionData.value.perDay) {
             foundry.utils.setProperty(itemData, "system.uses.max", actionData.value.perDay);
@@ -512,35 +568,39 @@ export class sbiActor {
     }
 
     async setArmor() {
-        let foundArmorItems = false;
-
-        for (const armorType of this.armor.types) {
-            if (armorType.toLowerCase() === "natural armor") {
-                this.set5eProperty("system.attributes.ac.calc", "natural");
-                this.set5eProperty("system.attributes.ac.flat", this.armor.ac);
-
-                foundArmorItems = true;
-            } else {
-                let item;
-                item = await sUtils.getItemFromPacksAsync(armorType, "equipment");
-                if (!item) {
-                    item = await sUtils.getItemFromPacksAsync(`${armorType} armor`, "equipment");
-                }
-                if (item) {
-                    item.system.equipped = true;
-                    item.system.proficient = true;
-                    item.system.attunement = 2;
-                    
-                    this.addItem(item);
-
-                    foundArmorItems = true;
-                }
-            }
-        }
-
-        if (!foundArmorItems) {
-            this.set5eProperty("system.attributes.ac.calc", "flat");
+        if (this.armor.types.includes("natural armor")) {
+            this.set5eProperty("system.attributes.ac.calc", "natural");
             this.set5eProperty("system.attributes.ac.flat", this.armor.ac);
+        } else {
+            this.set5eProperty("system.attributes.ac.calc", "default");
+        }
+    }
+
+    async setGear() {
+        for (const gearItem of this.gear) {
+            const actionItem = this.#dnd5e.items.find(i => i.type === "weapon" && (i.name.toLowerCase() === gearItem.name || i.name.toLowerCase() + "s" === gearItem.name));
+            if (actionItem) {
+                actionItem.system.quantity = gearItem.value;
+                continue;
+            }
+
+            let item = await sUtils.getItemFromPacksAsync(gearItem.name, "equipment");
+            if (!item) {
+                item = await sUtils.getItemFromPacksAsync(gearItem.name + " armor", "equipment");
+            }
+            if (!item) {
+                item = await sUtils.getItemFromPacksAsync(gearItem.name, "weapon");
+            }
+            if (!item) {
+                item = await sUtils.getItemFromPacksAsync(sUtils.trimStringEnd(gearItem.name, "s"), "weapon");
+            }
+            if (item) {
+                item.system.equipped = true;
+                item.system.proficient = true;
+                item.system.attunement = 2;
+                item.system.quantity = gearItem.quantity;
+                this.addItem(item);
+            }
         }
     }
 
@@ -550,17 +610,25 @@ export class sbiActor {
     }
 
     setDamagesAndConditions() {
-        if (this.standardConditionImmunities.length) {
-            this.set5eProperty("system.traits.ci.value", this.standardConditionImmunities);
+        if (this.damagesAndConditions.conditionImmunities) {
+            this.set5eProperty("system.traits.ci.value", this.damagesAndConditions.conditionImmunities.types);
+            this.set5eProperty("system.traits.ci.custom", this.damagesAndConditions.conditionImmunities.special);
         }
-
-        if (this.specialConditionImmunities) {
-            foundry.utils.setProperty(actorObject, "system.traits.ci.custom", sUtils.capitalizeFirstLetter(this.specialConditionImmunities))
+        if (this.damagesAndConditions.damageImmunities) {
+            this.set5eProperty("system.traits.di.value", this.damagesAndConditions.damageImmunities.types);
+            this.set5eProperty("system.traits.di.bypasses", this.damagesAndConditions.damageImmunities.bypasses);
+            this.set5eProperty("system.traits.di.custom", this.damagesAndConditions.damageImmunities.special);
         }
-
-        this.setDamageData(this.standardDamageImmunities, this.specialDamageImmunities, "di");
-        this.setDamageData(this.standardDamageResistances, this.specialDamageResistances, "dr");
-        this.setDamageData(this.standardDamageVulnerabilities, this.specialDamageVulnerabilities, "dv");
+        if (this.damagesAndConditions.damageResistances) {
+            this.set5eProperty("system.traits.dr.value", this.damagesAndConditions.damageResistances.types);
+            this.set5eProperty("system.traits.dr.bypasses", this.damagesAndConditions.damageResistances.bypasses);
+            this.set5eProperty("system.traits.dr.custom", this.damagesAndConditions.damageResistances.special);
+        }
+        if (this.damagesAndConditions.damageVulnerabilities) {
+            this.set5eProperty("system.traits.dv.value", this.damagesAndConditions.damageVulnerabilities.types);
+            this.set5eProperty("system.traits.dv.bypasses", this.damagesAndConditions.damageVulnerabilities.bypasses);
+            this.set5eProperty("system.traits.dv.custom", this.damagesAndConditions.damageVulnerabilities.special);
+        }
     }
 
     async createActor5e(selectedFolderId) {
@@ -570,41 +638,27 @@ export class sbiActor {
         actorData.folder = selectedFolderId;
         actorData.name = this.name;
         actorData.type = "npc";
+        
         const actor5e = await CONFIG.Actor.documentClass.create(actorData);
         
         await this.setSkills(actor5e);
 
+        // Check if AC needs fixed (if mage armor, skip check)
+        if (!this.armor.types.includes("mage") && this.armor.ac !== actor5e.system.attributes.ac.value) {
+            actor5e.update({
+                "system.attributes.ac.calc": "flat",
+                "system.attributes.ac.flat": this.armor.ac
+            });
+        }
+
+        // Update cast activities to have the spells shown in the spellbook
+        for (const item of actor5e.items) {
+            for (const castActivity of item.system.activities.filter(a => a.type === "cast")) {
+                await castActivity.update({"spell.spellbook": true});
+            }
+        }
+
         return actor5e;
-    }
-
-    setDamageData(standardDamages, specialDamage, damageID) {
-        if (standardDamages.length) {
-            this.set5eProperty(`system.traits.${damageID}.value`, standardDamages);
-        }
-
-        if (specialDamage) {
-            const specialDamagesLower = specialDamage.toLowerCase();
-
-            // "mundane attacks" is an MCDM thing.
-            if (specialDamagesLower.match(/nonmagical\sweapons/i)
-                || specialDamagesLower.match(/nonmagical\sattacks/i)
-                || specialDamagesLower.match(/mundane\sattacks/i)) {
-                this.set5eProperty(`system.traits.${damageID}.bypasses`, "mgc");
-            }
-
-            if (specialDamagesLower.includes("adamantine")) {
-                this.set5eProperty(`system.traits.${damageID}.bypasses`, ["ada", "mgc"]);
-            }
-
-            if (specialDamagesLower.includes("silvered")) {
-                this.set5eProperty(`system.traits.${damageID}.bypasses`, ["sil", "mgc"]);
-            }
-
-            // If no bypasses have been set, then assume Foundry will take care of setting the special damage text.
-            if (!this.#dnd5e.system.traits?.[damageID]?.bypasses) {
-                this.set5eProperty(`system.traits.${damageID}.custom`, sUtils.capitalizeFirstLetter(specialDamage));
-            }
-        }
     }
 
     setHealth() {
@@ -613,14 +667,25 @@ export class sbiActor {
         this.set5eProperty("system.attributes.hp.formula", this.health?.formula || 0);
     }
 
+    setInitiative() {
+        if (!this.initiative) return;
+
+        const dexterityMod = sUtils.getAbilityMod(this.#dnd5e.system.abilities.dex.value || 10);
+        if (dexterityMod !== this.initiative.mod) {
+            this.set5eProperty("system.attributes.init.bonus", this.initiative.mod - dexterityMod);
+        }
+    }
+
     setLanguages() {
         if (!this.language) return;
 
         const knownValues = this.language.knownLanguages.map(sUtils.convertLanguage);
         const unknownValues = this.language.unknownLanguages.map(sUtils.convertLanguage);
+        const telepathyValue = this.language.telepathy;
 
         this.set5eProperty("system.traits.languages.value", knownValues);
         this.set5eProperty("system.traits.languages.custom", sUtils.capitalizeFirstLetter(unknownValues.join(";")));
+        this.set5eProperty("system.traits.languages.communication.telepathy.value", telepathyValue);
     }
 
     setRacialDetails() {
@@ -776,8 +841,7 @@ export class sbiActor {
     }
 
     async setSpellcasting(spellcastingType) {
-        const { spellcastingDetails, spellInfo } = this[spellcastingType];
-        const featureName = sUtils.camelToTitleCase(spellcastingType);
+        const { featureName, spellcastingDetails, spellInfo } = this[spellcastingType];
         const description = spellInfo[0].value.replace(new RegExp(`${featureName}\\s*(\\([^)]*\\))?\\.`, "ig"), "");
 
         const spells = spellInfo.slice(1);
@@ -800,7 +864,6 @@ export class sbiActor {
         foundry.utils.setProperty(itemData, "system.description.value", sUtils.combineToString(descriptionLines));
         const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
         if (matchingImage) itemData.img = matchingImage;
-        this.addItem(itemData);
 
         // Set spellcaster level
         if (spellcastingDetails.level) {
@@ -813,44 +876,49 @@ export class sbiActor {
         }
 
         // Add spells to actor.
+        const useActivities = game.settings.get(MODULE_NAME, "spellsAsActivities");
         for (const spellObj of spellObjs) {
-            let spell = await sUtils.getItemFromPacksAsync(spellObj.name, "spell");
+            let castActivity = {_id: foundry.utils.randomID(), type: "cast"};
+            castActivity.name = spellObj.name; // This is not actually going to be saved (name is going to be derived from the spell itself), but we need it to compare later
 
-            if (!spell) {
-                this.missingSpells.push(spellObj.name);
-                const activityId = foundry.utils.randomID();
-                spell = {
-                    name: spellObj.name,
-                    type: "spell",
-                    system: {
-                        activities: {
-                            [activityId]: {_id: activityId, type: "utility", activation: {type: "action", value: 1}}
-                        }
-                    }
+            const spell = await this.fetchSpellByName(spellObj.name);
+
+            if (useActivities) {
+                castActivity.spell = {
+                    uuid: spell.sourceUuid,
+                    level: spellObj.level ?? spell.system.level,
+                    spellbook: false, // this will be updated after the actor is created
                 };
-            }
-
-            if (spell.system.source?.rules === "2014") {
-                this.obsoleteSpells.push(spellObj.name);
             }
 
             if (spellObj.type === "slots") {
                 // Update the actor's number of slots per level.
-                this.set5eProperty(`system.spells.spell${spell.system.level}.value`, spellObj.count);
+                //this.set5eProperty(`system.spells.spell${spell.system.level}.value`, spellObj.count);
                 this.set5eProperty(`system.spells.spell${spell.system.level}.max`, spellObj.count);
                 this.set5eProperty(`system.spells.spell${spell.system.level}.override`, spellObj.count);
-                foundry.utils.setProperty(spell, "system.preparation.prepared", true);
+                if (!useActivities) {
+                    foundry.utils.setProperty(spell, "system.preparation.prepared", true);
+                }
             } else if (spellObj.type === "innate") {
                 if (spellObj.count) {
-                    let mainSpellActivityId = Object.values(spell.system.activities)[0]._id;
-                    foundry.utils.setProperty(spell, `system.activities.${mainSpellActivityId}.consumption.targets`, [{
-                        type: "itemUses",
-                        value: 1
-                    }]);
-                    foundry.utils.setProperty(spell, "system.uses.value", spellObj.count);
-                    foundry.utils.setProperty(spell, "system.uses.max", "" + spellObj.count);
-                    foundry.utils.setProperty(spell, "system.uses.recovery", [{period: "day", type: "recoverAll"}]);
-                    foundry.utils.setProperty(spell, "system.preparation.mode", "innate");
+                    if (useActivities) {
+                        foundry.utils.setProperty(castActivity, "consumption.targets", [{
+                            type: "activityUses",
+                            value: 1
+                        }]);
+                        foundry.utils.setProperty(castActivity, "uses.max", "" + spellObj.count);
+                        foundry.utils.setProperty(castActivity, "uses.recovery", [{period: "day", type: "recoverAll"}]);
+                    } else {
+                        let mainSpellActivityId = Object.values(spell.system.activities)[0]._id;
+                        foundry.utils.setProperty(spell, `system.activities.${mainSpellActivityId}.consumption.targets`, [{
+                            type: "itemUses",
+                            value: 1
+                        }]);
+                        //foundry.utils.setProperty(spell, "system.uses.value", spellObj.count);
+                        foundry.utils.setProperty(spell, "system.uses.max", "" + spellObj.count);
+                        foundry.utils.setProperty(spell, "system.uses.recovery", [{period: "day", type: "recoverAll"}]);
+                        foundry.utils.setProperty(spell, "system.preparation.mode", "innate");
+                    }
                 } else {
                     foundry.utils.setProperty(spell, "system.preparation.mode", "atwill");
                 }
@@ -861,11 +929,20 @@ export class sbiActor {
                 foundry.utils.setProperty(spell, "system.preparation.prepared", true);
             }
 
-            // Add the spell to the character sheet if it doesn't exist already.
-            if (!this.#dnd5e.items.find(i => i.name === spell.name)) {
-                this.addItem(spell);
+            if (useActivities) {
+                // Add the spell to the spellcasting item's activities if it doesn't exist already.
+                if (!Object.values(itemData.system?.activities || {}).find(a => a.name === spell.name)) {
+                    foundry.utils.setProperty(itemData, `system.activities.${castActivity._id}`, castActivity);
+                }
+            } else {
+                // Add the spell to the character sheet if it doesn't exist already.
+                if (!this.#dnd5e.items.find(i => i.name === spell.name)) {
+                    this.addItem(spell);
+                }
             }
         }
+
+        this.addItem(itemData);
     }
 
 }

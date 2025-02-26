@@ -1,17 +1,21 @@
 export class sbiRegex {
     // Regexes for checking known types of lines. They have to be written carefully 
-    // so that it matches on the line we carea bout, but not any other random line
+    // so that it matches on the line we care about, but not any other random line
     // that happens to start with same the word(s).
     static armor = /^((armor|armour) class|ac)\s\d+/i;
     static actions = /^actions$/i;
     static abilities = /^(\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b|\bMod\s+Save\b)/i;
     static bonusActions = /^bonus actions$/i;
     static challenge = /^(challenge|\bcr\b|challenge rating)\s\d+/i;
-    static conditionImmunities = /^condition immunities\s/i;
-    static damageImmunities = /^damage immunities\s/i;
-    static damageResistances = /^damage resistances\s/i;
-    static damageVulnerabilities = /^damage vulnerabilities\s/i;
+    static conditionImmunities = /^condition\simmunities\s/i;
+    static damageImmunities = /^damage\simmunities\s/i;
+    static immunities2024 = /^immunities\s/i;
+    static damageResistances = /^(damage\s)?resistances\s/i;
+    static damageVulnerabilities = /^(damage\s)?vulnerabilities\s/i;
+    static gear = /^gear\s/i;
     static health = /^(hit points|\bhp\b)\s\d+/i;
+    // Initiative should be in the same line as AC, but we can expect handcrafted blocks to often have their own line for it, so we will check in both places
+    static initiative = /^initiative\s/i;
     static lairActions = /^lair actions$/i;
     static languages = /^languages\s/i;
     static legendaryActions = /^legendary actions$/i;
@@ -21,7 +25,7 @@ export class sbiRegex {
     static proficiencyBonus = /^proficiency bonus\s\+/i;
     // The racial details line is here instead of below because it doesn't have a 
     // standard starting word, so we have to look at the whole line.
-    static racialDetails = /^(?<size>\bfine\b|\bdiminutive\b|\btiny\b|\bsmall\b|\bmedium\b|\blarge\b|\bhuge\b|\bgargantuan\b|\bcolossal\b)(\sswarm of (?<swarmSize>\w+))?\s(?<type>\w+)([,\s]+\((?<race>[,\w\s]+)\))?([,\s]+(?<alignment>[\w\s\-]+))?/idg;
+    static racialDetails = /^(?<size>\bfine\b|\bdiminutive\b|\btiny\b|\bsmall\b|\bmedium\b|\blarge\b|\bhuge\b|\bgargantuan\b|\bcolossal\b)(\sor\s\w+)?(\sswarm of (?<swarmSize>\w+))?\s(?<type>\w+)([,\s]+\((?<race>[,\w\s]+)\))?([,\s]+(?<alignment>[\w\s\-]+))?/idg;
     static reactions = /^reactions$/i;
     static savingThrows = /^(saving throws|saves)\s(\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b)/i;
     static senses = /^senses( passive)?(.+\d+\s\bft\b)?/i;
@@ -33,12 +37,15 @@ export class sbiRegex {
     static villainActions = /^villain actions$/i;
 
     // Regexes for pulling the details out of the lines we identified using the ones above.
-    static armorDetails = /(?<ac>\d+)( \((?<armorType>.+)\))?/idg;
+    static armorDetails = new RegExp(`(?<ac>(?<=\\s)\\d+)(\\s\\((?<armorType>[^)]+)\\))?(\\s+Initiative\\s${this.initiativeDetailsBase})?`, "idg");
     static challengeDetails = /(?<cr>(½|[\d\/]+))\s?(?<role>[A-Za-z]+)?\s?(\(?(?<xp>[\d,]+)\s?xp\)?)?/idg;
-    static rollDetails = /(?<value>\d+)\s?(\((?<formula>\d+d\d+(\s?[\+\-−–]\s?\d+)?)\))?/idg;
+    static gearDetails = /(?<=gear|,)\s?(?<name>\w+(?:\s\w+)*)(?:\s?\((?<quantity>\d+)\))?/idg;
+    static initiativeDetailsBase = "(?<initiativeModifier>[\\+\\-−–]?\\d+)(\\s+\\((?<initiativeScore>\\d+)\\))?";
+    static initiativeDetails = new RegExp(this.initiativeDetailsBase, "idg");
     static perDayBase = "(?<perDay>\\d+)\\\/day";
     static perDayDetails = new RegExp(this.perDayBase, "idg");
     static perDayCountFull = new RegExp(`\\(${this.perDayBase}[\\);]`, "idg");
+    static rollDetails = /(?<value>\d+)\s?(\((?<formula>\d+d\d+(\s?[\+\-−–]\s?\d+)?)\))?/idg;
     static savingThrowDetails = /must\s(make|succeed\son)\sa\sdc\s(?<saveDc>\d+)\s(?<saveAbility>\w+)\s(?<saveText>saving\sthrow|save)(?:.*(?<halfDamage>\bhalf\b)[A-Z\s]*damage)?/idg;
     static savingThrowDetails24 = /(?<saveAbility>\w+)\s(?<saveText>saving throw):\s*dc\s(?<saveDc>\d+)(?:.*success:\s(?<halfDamage>\bhalf\b))?/idg;
     static sensesDetails = /(?<name>\w+) (?<modifier>\d+)/idg;
@@ -65,19 +72,22 @@ export class sbiRegex {
     static actionCost = /\((costs )?(?<cost>\d+) action(s)?\)/idg;
     static attack = /\+(?<toHit>\d+)\sto\shit/idg;
     static attack24 = /attack\sroll:\s*\+(?<toHit>\d+)/idg;
+    static castAction = /^(?<featureName>[^.]+)\.\s?(?<monsterDesc>(?:\w+\s){1,4})\bcasts\s(?!a\s)(?<spellList>.*?),?\s?(?:in response|using|\.)/idg;
+    static castActionSpell = /(?<=^|,|\bor\s)\s?(?:(?:or\s)?(?<spellName>\b(?:[^,.:;](?!or))+))/idg;
     static conditionTypes = /(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)/idg;
     static damageRoll = /\(?(?<baseDamageRoll>\d+d\d+?)\s?(?<baseDamageMod>[+-]\s?\d+)?\)?\s(?<baseDamageType>\w+)(?:\sdamage)(?:.+(?:(?:\bor\s+(?:\d+\s+\(*)?(?:(?<versatileDamageRoll>\d+d\d+?)\s?(?<versatileDamageMod>[+-]\s?\d+)?)\)?\s(?<versatileDamageType>\w+)(?:\sdamage\sif\sused\swith\stwo\shands))|(?:plus|and)\s+(?:\d+\s+\(*)?(?:(?<addDamageRoll>\d+d\d+?)\s?(?<addDamageMod>[+-]\s?\d+)?)\)?\s(?<addDamageType>\w+)(?:\sdamage)))?/idg
     static damageTypes = /(?<damageType>\bbludgeoning\b|\bpiercing\b|\bslashing\b|\bacid\b|\bcold\b|\bfire\b|\blightning\b|\bnecrotic\b|\bpoison\b|\bpsychic\b|\bradiant\b|\bthunder\b)/idg;
-    static knownLanguages = /(?<language>\baarakocra\b|\babyssal\b|\baquan\b|\bauran\b|\bcelestial\b|\bcommon\b|\bdeep\b|\bdraconic\b|\bdruidic\b|\bdwarvish\b|\belvish\b|\bgiant\b|\bgith\b|\bgnoll\b|\bgnomish\b|\bgoblin\b|\bhalfling\b|\bignan\b|\binfernal\b|\borc\b|\bprimordial\b|\bsylvan\b|\bterran\b|\bcant\b|\bundercommon\b)/idg;
+    static knownLanguages = /(?:\w+\s*\()?(?<language>\baarakocra\b|\babyssal\b|\baquan\b|\bauran\b|\bcelestial\b|\bcommon\b|\bdeep\b|\bdraconic\b|\bdruidic\b|\bdwarvish\b|\belvish\b|\bgiant\b|\bgith\b|\bgnoll\b|\bgnomish\b|\bgoblin\b|\bhalfling\b|\bignan\b|\binfernal\b|\borc\b|\bprimordial\b|\bsylvan\b|\bterran\b|\bcant\b|\bundercommon\b|\btelepathy\s(?<telepathyRange>\d+)\s(f(ee|oo)?t\.?|'|’))\)?/idg;
     static legendaryActionCount = /take\s(?<count>\d+)\slegendary/idg;
     static lairInitiativeCount = /initiative\scount\s(?<initiativeCount>\d+)/idg;
     static spellGroupHeader = "at.will|cantrips|(?<perDay>\\d+)\\/day(?: each)?|1st|2nd|3rd|4th|5th|6th|7th|8th|9th";
     static spellGroupHeaderNoPerDay = this.spellGroupHeader.replace("?<perDay>", "");
-    static spellName = new RegExp(`(?<=,|(?<spellGroup>(?:${this.spellGroupHeader})(?:[\\w\\s\\(-]*(?:(?<slots>\\d+) slot|at.will)[^:]*)?):)\\s*(?<spellName>(?:[^.,:](?!${this.spellGroupHeaderNoPerDay}))+?)(\\s[ABR]|\\s?\\+)?(?:\\s*\\(.*?\\)\\s*)?(?=,|[\\s.:]*$|\\s+(${this.spellGroupHeaderNoPerDay}))`, "idg");
+    // Good luck modifying this one (I'll break this one down too sooner or later)
+    static spellName = new RegExp(`(?<=,|(?<spellGroup>(?:${this.spellGroupHeader})(?:[\\w\\s\\(-]*(?:(?<slots>\\d+) slot|at.will)[^:]*)?):)\\s*[*\\s]*(?<spellName>(?:[^.,:](?!${this.spellGroupHeaderNoPerDay}))+?)(?:\\s\\(level\\s(?<spellLevel>\\d+)[^)]*\\))?(?:\\s\\((?<affectsAC>included in ac)\\))?[*\\s]*(\\s[ABR]|\\s?\\+)?(?:\\s*\\(.*?\\)\\s*)?(?=,|[\\s.:]*$|\\s+(${this.spellGroupHeaderNoPerDay}))`, "idg");
     static spellLine = /(at-will|cantrips|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)[\w\s\(\)-]*:/ig;
     static spellInnateLine = /at will:|\d\/day( each)?/ig;
     static spellInnateSingle = /(?<perDay>\d+)\/day.*innately\scast\s(?<spellName>[\w|\s]+)(\s\(.+\))?,/idg;
-    static spellActionTItle = /\d+\/day(?:[,;]\s?(?<spellLevel>\d)(?:st|nd|rd|th)[-\s]level\sspell)?(?:[,;]\s?(?<concentration>concentration))?/idg;
+    static spellActionTitle = /\d+\/day(?:[,;]\s?(?<spellLevel>\d)(?:st|nd|rd|th)[-\s]level\sspell)?(?:[,;]\s?(?<concentration>concentration))?/idg;
     static range = /range\s(?<near>\d+)(\/(?<far>\d+))?\s?(f(ee|oo)?t|'|’)/idg;
     static reach = /reach\s(?<reach>\d+)\s?(f(ee|oo)?t|'|’)/idg;
     static recharge = /\(recharge\s(?<recharge>\d+)([–|-]\d+)?\)/idg;
