@@ -36,18 +36,20 @@ export class sbiRegex {
     static utilitySpells = /^utility spells$/i;
     static villainActions = /^villain actions$/i;
 
+    static conditionBase = String.raw`(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)`;
+
     // Regexes for pulling the details out of the lines we identified using the ones above.
+    static initiativeDetailsBase = String.raw`(?<initiativeModifier>[\+\-−–]?\d+)(\s+\((?<initiativeScore>\d+)\))?`;
+    static initiativeDetails = new RegExp(this.initiativeDetailsBase, "idg");
     static armorDetails = new RegExp(`(?<ac>(?<=\\s)\\d+)(\\s\\((?<armorType>[^)]+)\\))?(\\s+Initiative\\s${this.initiativeDetailsBase})?`, "idg");
     static challengeDetails = /(?<cr>(½|[\d\/]+))\s?(?<role>[A-Za-z]+)?\s?(\(?(?<xp>[\d,]+)\s?xp\)?)?/idg;
     static gearDetails = /(?<=gear|,)\s?(?<name>\w+(?:\s\w+)*)(?:\s?\((?<quantity>\d+)\))?/idg;
-    static initiativeDetailsBase = "(?<initiativeModifier>[\\+\\-−–]?\\d+)(\\s+\\((?<initiativeScore>\\d+)\\))?";
-    static initiativeDetails = new RegExp(this.initiativeDetailsBase, "idg");
-    static perDayBase = "(?<perDay>\\d+)\\\/day";
+    static perDayBase = String.raw`(?<perDay>\d+)\/day`;
     static perDayDetails = new RegExp(this.perDayBase, "idg");
     static perDayCountFull = new RegExp(`\\(${this.perDayBase}[\\),;]`, "idg");
     static rollDetails = /(?<value>\d+)\s?(\((?<formula>\d+d\d+(\s?[\+\-−–]\s?\d+)?)\))?/idg;
-    static savingThrowDetails = /must\s(make|succeed\son)\sa\sdc\s(?<saveDc>\d+)\s(?<saveAbility>\w+)\s(?<saveText>saving\sthrow|save)(?:.*(?<halfDamage>\bhalf\b)[A-Z\s]*damage)?/idg;
-    static savingThrowDetails24 = /(?<saveAbility>\w+)\s(?<saveText>saving throw):\s*dc\s(?<saveDc>\d+)(?:.*success:\s(?<halfDamage>\bhalf\b))?/idg;
+    static savingThrowDetails = new RegExp(String.raw`must\s(make|succeed\son)\sa\sdc\s(?<saveDc>\d+)\s(?<saveAbility>\w+)\s(?<saveText>saving\sthrow|save)(?:.*${this.conditionBase})?(?:.*(?<halfDamage>\bhalf\b)[A-Z\s]*damage)?`, "idg");
+    static savingThrowDetails24 = new RegExp(String.raw`(?<saveAbility>\w+)\s(?<saveText>saving throw):\s*dc\s(?<saveDc>\d+)(?:.*${this.conditionBase})?(?:.*success:\s(?<halfDamage>\bhalf\b))?`, "idg");
     static sensesDetails = /(?<name>\w+) (?<modifier>\d+)/idg;
     static skillDetails = /(?<name>\bacrobatics\b|\barcana\b|\banimal handling\b|\bathletics\b|\bdeception\b|\bhistory\b|\binsight\b|\bintimidation\b|\binvestigation\b|\bmedicine\b|\bnature\b|\bperception\b|\bperformance\b|\bpersuasion\b|\breligion\b|\bsleight of hand\b|\bstealth\b|\bsurvival\b) (?<modifier>[\+|-]\d+)/idg;
     static speedDetails = /(?<name>\w+)\s?(?<value>\d+)/idg;
@@ -74,7 +76,7 @@ export class sbiRegex {
     static attack24 = /attack\sroll:\s*\+(?<toHit>\d+)/idg;
     static castAction = /^(?<featureName>[^.]+)\.\s?(?<monsterDesc>(?:\w+\s){1,4})(?:\bcasts|\bcan innately cast|\bspellcasting to cast)\s(?!a\s)(?<spellList>.*?),?\s?(?:in response|using|requiring|\.)/idg;
     static castActionSpell = /(?<=^|,|\bor\s)\s?(?:(?:or\s)?(?<spellName>\b(?:[^,.:;](?!or|\())+)(?:\s\(level\s(?<spellLevel>\d+)\sversion\))?)/idg;
-    static conditionTypes = /(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)/idg;
+    static conditionTypes = new RegExp(this.conditionBase, "idg");
     static damageRoll = /\(?(?<baseDamageRoll>\d+d\d+?)\s?(?<baseDamageMod>[+-]\s?\d+)?\)?\s(?<baseDamageType>\w+)(?:\sdamage)(?:.+(?:(?:\bor\s+(?:\d+\s+\(*)?(?:(?<versatileDamageRoll>\d+d\d+?)\s?(?<versatileDamageMod>[+-]\s?\d+)?)\)?\s(?<versatileDamageType>\w+)(?:\sdamage\sif\sused\swith\stwo\shands))|(?:plus|and)\s+(?:\d+\s+\(*)?(?:(?<addDamageRoll>\d+d\d+?)\s?(?<addDamageMod>[+-]\s?\d+)?)\)?\s(?<addDamageType>\w+)(?:\sdamage)))?/idg
     static damageTypes = /(?<damageType>\bbludgeoning\b|\bpiercing\b|\bslashing\b|\bacid\b|\bcold\b|\bfire\b|\blightning\b|\bnecrotic\b|\bpoison\b|\bpsychic\b|\bradiant\b|\bthunder\b)/idg;
     static knownLanguages = /(?:\w+\s*\()?(?<language>\baarakocra\b|\babyssal\b|\baquan\b|\bauran\b|\bcelestial\b|\bcommon\b|\bdeep\b|\bdraconic\b|\bdruidic\b|\bdwarvish\b|\belvish\b|\bgiant\b|\bgith\b|\bgnoll\b|\bgnomish\b|\bgoblin\b|\bhalfling\b|\bignan\b|\binfernal\b|\borc\b|\bprimordial\b|\bsylvan\b|\bterran\b|\bcant\b|\bundercommon\b|\btelepathy\s(?<telepathyRange>\d+)\s(f(ee|oo)?t\.?|'|’))\)?/idg;
@@ -91,5 +93,9 @@ export class sbiRegex {
     static range = /range\s(?<near>\d+)(\/(?<far>\d+))?\s?(f(ee|oo)?t|'|’)/idg;
     static reach = /reach\s(?<reach>\d+)\s?(f(ee|oo)?t|'|’)/idg;
     static recharge = /\(recharge\s(?<recharge>\d+)([–|-]\d+)?\)/idg;
-    static target = /(?:a\s(?<areaRange>\d+)(?:-?(?:foot|feet|ft?.|'|’)\s(?<shape>\w+))|(?<targetsAmount>each|a|one)\s[\w\s]+?(?:within\s(?<range>\d+)\s(?:foot|feet|ft?.|'|’)))/idg
+    static target = /(?:a\s(?<areaRange>\d+)(?:-?(?:foot|feet|ft?.|'|’)\s(?<shape>\w+))|(?<targetsAmount>each|a|one)\s[\w\s]+?(?:within\s(?<range>\d+)\s(?:foot|feet|ft?.|'|’)))/idg;
+
+    // Regexes for description enrichment
+    static makesAttack = /with\sa\suse\sof\s(?:.*\sor\s(?:\(\w\)\s)?)?(?<attack>(?:[^,.:;(\s]+\s?){1,4})(?:[,.:;]|\sto cast)|makes?\s\w+\s(?<attack11>(?:[^,.:;\s]+\s?){1,4})\sattacks?(?:\sand\s\w+\s(?<attack12>(?:[^,.:;\s]+\s?){1,4})\sattacks?)?|makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack21>(?:.(?!or))*)(?:\sor\s(?<attack22>.*))?\sin any combination|(?:\w+\s)?with\sits\s(?<attack31>(?:.(?!and))*)(?:\sand\s\w+\swith\sits\s(?<attack32>[^.]+))?.)/ig;
+
 }

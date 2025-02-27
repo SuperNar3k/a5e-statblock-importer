@@ -1,6 +1,7 @@
 import { sbiUtils as sUtils } from "./sbiUtils.js";
 import { Blocks } from "./sbiData.js";
 import { MODULE_NAME } from "./sbiConfig.js";
+import { sbiRegex as sRegex} from "./sbiRegex.js";
 
 export class sbiActor {
     #dnd5e = {};
@@ -37,6 +38,12 @@ export class sbiActor {
         this.utilitySpells = {};                    // {object, NameValueData[]} (MCDM)
         this.villainActions = [];                   // NameValueData[]           (MCDM)
         this.damagesAndConditions = {}              // object
+    }
+
+    get spellcastingFeature() {
+        if (this.innateSpellcasting.featureName) return this.innateSpellcasting;
+        if (this.spellcasting.featureName) return this.spellcasting;
+        if (this.utilitySpells.featureName) return this.utilitySpells;
     }
 
     get actorData() {
@@ -79,13 +86,68 @@ export class sbiActor {
         this.#dnd5e.items.push(itemObject);
     }
 
+    enrichDescription(description) {
+        let enrichedDescription = description;
+
+        // These are mostly 2024 formats, see if we can do the same for 2014
+        enrichedDescription = enrichedDescription.replace(/(?<=(?:roll|attack):)\s?\+\d+/i, " [[/attack]]");
+        enrichedDescription = enrichedDescription.replace(/(?<=\bhit:)[\sd\(\)\d\+]+(\w+\s)?damage(\splus\s[\sd\(\)\d\+]+(\w+\s)?damage)?/i, " [[/damage average]] damage");;
+        enrichedDescription = enrichedDescription.replace(/^((melee\s|ranged\s)(weapon\s|spell\s)?attack\s?(roll)?:)/i, "<em>$1</em>");
+        enrichedDescription = enrichedDescription.replace(/^(\w+\ssaving\sthrow:)/i, "<em>$1</em>");
+        enrichedDescription = enrichedDescription.replace(/(?<=\bfailure:)[\sd\(\)\d\+]+(\w+\s)?damage/i, " [[/damage average]] damage");
+
+        // Catch-all for remaining roll formulas
+        enrichedDescription = enrichedDescription.replace(/(\d+d\d+(\s?\+\s?\d+)?)/i, "[[/r $1]]")
+
+        enrichedDescription = enrichedDescription.replace(/\bconcentration\b/i, "&Reference[Concentration]");
+
+        // Enrich references to existing actions
+        enrichedDescription = enrichedDescription.replace(sRegex.makesAttack, (match, ...groups) => {
+            const attacks = groups.slice(0, 6).filter(a => a);
+            let result = match;
+            attacks.forEach(attack => {
+                const matchedAction = this.actions.find(a => a.name.toLowerCase().replace(/[\W_]/g, "_") === attack.toLowerCase().replace(/[\W_]/g, "_"));
+                if (matchedAction) {
+                    result = result.replace(attack, "[[/item " + matchedAction.name + "]]");
+                }
+            });
+            return result;
+        });
+        // Enrich reference to existing spell in Multiattack
+        enrichedDescription = enrichedDescription.replace(/(?<=a\suse\sof\s(\(\w\)\s)?spellcasting\sto\scast\s)(?<spellName>(?:[^,.:;\s]|\s(?!\())+)/i, (match) => {
+            let uuid;
+            if (!game.settings.get(MODULE_NAME, "spellsAsActivities")) {
+                uuid = this.#dnd5e.items?.find(i => i.type === "spell" && i.name.toLowerCase().replace(/[\W_]/g, "_") === match.toLowerCase().replace(/[\W_]/g, "_"))?.sourceUuid;
+            } else {
+                uuid = this.spellcastingFeature.spellInfo
+                    .filter(spellGroup => spellGroup.name !== "Description")
+                    .map(spellGroup => spellGroup.value)
+                    .flat()
+                    .find(spell => spell.name.toLowerCase().replace(/[\W_]/g, "_") === match.toLowerCase().replace(/[\W_]/g, "_"))?.uuid;
+            }
+            if (uuid) return "<em>@UUID[" + uuid + "]</em>";
+            return match;
+        });
+        enrichedDescription = enrichedDescription.replace(/(?<=use\sof\s(\(\w\)\s)?|uses\s)spellcasting/i, "[[/item Spellcasting]]");
+
+        // Enrich conditions
+        enrichedDescription = enrichedDescription.replace(sRegex.conditionTypes, (match) => {
+            return "&Reference[" + sUtils.capitalizeAll(match) + " apply=false]";
+        });
+
+        // Add enclosing paragraph if necessary
+        if (!enrichedDescription.startsWith("<p>")) enrichedDescription = "<p>" + enrichedDescription + "</p>";
+
+        return enrichedDescription;
+    }
+
     /*** Actions */
 
     async setActions() {
         for (const actionData of this.actions) {
             const name = actionData.name;
             const lowerName = name.toLowerCase();
-            const description = sUtils.combineSourceLines(actionData.value.lines);
+            const description = this.enrichDescription(sUtils.combineSourceLines(actionData.value.lines));
 
             const itemData = {};
             itemData.name = sUtils.capitalizeAll(name);
@@ -102,6 +164,9 @@ export class sbiActor {
                 foundry.utils.setProperty(itemData, "system.proficient", true);
                 foundry.utils.setProperty(itemData, "system.quantity", 1);
             }
+
+            const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
+            if (matchingImage) itemData.img = matchingImage;
             
             this.setAttackOrSave(actionData, itemData);
 
@@ -121,9 +186,6 @@ export class sbiActor {
                 foundry.utils.setProperty(itemData, "system.level", actionData.value.spell.level);
                 foundry.utils.setProperty(itemData, "system.properties", ["concentration"]);
             }
-
-            const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
-            if (matchingImage) itemData.img = matchingImage;
 
             this.addItem(itemData);
         }
@@ -146,7 +208,7 @@ export class sbiActor {
         // Create the items for each action.
         for (const actionData of this[type]) {
             const actionName = actionData.name;
-            const description = sUtils.combineSourceLines(actionData.value.lines, actionData.name !== "Description");
+            const description = this.enrichDescription(sUtils.combineSourceLines(actionData.value.lines, actionData.name !== "Description"));
 
             const itemData = {};
             itemData.name = actionName;
@@ -156,6 +218,10 @@ export class sbiActor {
 
             if (actionName === "Description") {
                 itemData.name = sUtils.camelToTitleCase(type);
+
+                const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
+                if (matchingImage) itemData.img = matchingImage;
+
                 // Add these just so that it doesn't say the action is not equipped and not proficient in the UI.
                 foundry.utils.setProperty(itemData, "system.equipped", true);
                 foundry.utils.setProperty(itemData, "system.proficient", true);
@@ -178,6 +244,9 @@ export class sbiActor {
                 itemData.name = actionName;
                 let actionCost = actionData.value.actionCost || 1;
 
+                const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
+                if (matchingImage) itemData.img = matchingImage;
+
                 this.setAttackOrSave(actionData, itemData);
                 this.setRecharge(actionData, itemData);
                 await this.setCastSpells(actionData, itemData);
@@ -192,9 +261,6 @@ export class sbiActor {
                 foundry.utils.setProperty(itemData, `system.activities.${activityId}`, {_id: activityId, type: "utility", activation: {type: activationType, value: 1}});
             }
 
-            const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
-            if (matchingImage) itemData.img = matchingImage;
-
             this.addItem(itemData);
         }
     }
@@ -203,7 +269,7 @@ export class sbiActor {
     async setMinorActions(type) {
         for (const actionData of this[type]) {
             const name = actionData.name;
-            const description = sUtils.combineSourceLines(actionData.value.lines);
+            const description = this.enrichDescription(sUtils.combineSourceLines(actionData.value.lines));
 
             const itemData = {};
             itemData.name = sUtils.capitalizeAll(name);
@@ -274,6 +340,20 @@ export class sbiActor {
             foundry.utils.setProperty(itemData, `system.activities.${saveActivityId}`, {_id: saveActivityId, type: "save", activation: {type: "action", value: 1}});
             foundry.utils.setProperty(itemData, `system.activities.${saveActivityId}.damage.onSave`, actionData.value.save.damageOnSave);
             foundry.utils.setProperty(itemData, `system.activities.${saveActivityId}.save`, {ability: sUtils.convertToShortAbility(actionData.value.save.ability), dc: {formula: parseInt(actionData.value.save.dc)}});
+
+            // also add new effect to item, and set it in the activity
+            if (actionData.value.save.condition) {
+                const effect = {
+                    _id: foundry.utils.randomID(),
+                    name: itemData.name + ": " + sUtils.capitalizeAll(actionData.value.save.condition),
+                    img: itemData.img,
+                    transfer: false,
+                    type: "base",
+                    statuses: [actionData.value.save.condition.toLowerCase()],
+                };
+                foundry.utils.setProperty(itemData, "effects", [effect, ...(itemData.effects || [])]);
+                foundry.utils.setProperty(itemData, `system.activities.${saveActivityId}.effects`, [{_id: effect._id, onSave: false}]);
+            }
         }
 
         if ((actionData.value.attack || actionData.value.save) && actionData.value.damage) {
@@ -394,6 +474,7 @@ export class sbiActor {
                     this.set5eProperty("system.resources.legres.max", featureData.value.legendaryResistanceCount);
                 }
 
+                foundry.utils.setProperty(itemData, "system.properties", ["trait", ...(itemData.system.properties ?? [])]);
                 foundry.utils.setProperty(itemData, `system.activities.${activityId}`, {
                     type: "utility",
                     activation: {type: "special"},
@@ -453,7 +534,7 @@ export class sbiActor {
                 const spell = await this.fetchSpellByName(spellObj.name);
 
                 if (spell.sourceUuid) {
-                    updatedDescription = updatedDescription.replaceAll(spellObj.name, "@UUID[" + spell.sourceUuid + "]");
+                    updatedDescription = updatedDescription.replaceAll(spellObj.name, "<em>@UUID[" + spell.sourceUuid + "]</em>");
                 }
 
                 const castActivity = {
@@ -930,7 +1011,7 @@ export class sbiActor {
                 }
             } else {
                 // Add the spell to the character sheet if it doesn't exist already.
-                if (!this.#dnd5e.items.find(i => i.name === spell.name)) {
+                if (!this.#dnd5e.items?.find(i => i.name === spell.name)) {
                     this.addItem(spell);
                 }
             }
@@ -941,8 +1022,12 @@ export class sbiActor {
             descriptionLines.push(`<p>${description}</p>`);
 
             // Put spell groups on their own lines in the description so that it reads better.
-            for (const spell of spells) {
-                descriptionLines.push(`<p><strong>${spell.name}:</strong> ${spell.value.map(s => s.uuid ? "@UUID[" + s.uuid + "]" : s.name).join(", ")}</p>`);
+            function getSpellDescription(spell) {
+                const levelDescription = spell.level ? " (level " + spell.level + " version)" : "";
+                return "<em>" + (spell.uuid ? "@UUID[" + spell.uuid + "]" : spell.name) + "</em>" + levelDescription;
+            }
+            for (const spellGroup of spells) {
+                descriptionLines.push(`<p><strong>${spellGroup.name}:</strong> ${spellGroup.value.map(getSpellDescription).join(", ")}</p>`);
             }
         }
         foundry.utils.setProperty(itemData, "system.description.value", sUtils.combineToString(descriptionLines));

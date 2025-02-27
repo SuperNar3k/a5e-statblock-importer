@@ -665,6 +665,7 @@ export class sbiParser {
             actionData.value.save = {
                 dc: saveMatch.groups.saveDc,
                 ability: saveMatch.groups.saveAbility,
+                condition: saveMatch.groups.condition,
                 damageOnSave: saveMatch.groups.halfDamage ? "half" : "none"
             };
         }
