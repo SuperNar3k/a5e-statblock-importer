@@ -1,20 +1,22 @@
-<form>
+<form class="standard-form">
     <section id="sbi-top">
         <div class="form-group">
-            <label for="sbi-import-autoparse">Auto parse:
+            <label for="sbi-import-autoparse">Auto parse:</label>
+            <div class="form-fields">
                 <input id="sbi-import-autoparse" type="checkbox" checked="checked" />
-            </label>
-            <button id="sbi-import-parse" type="button">Parse</button>
+            </div>
+            <button id="sbi-import-parse" type="button" data-action="parse">Parse</button>
         </div>
     </section>
     <div id="sbi-input" contenteditable="true" data-placeholder="Usage:
-- Paste the full statblock text into this box. It should follow WotC formatting to be imported correctly.
-- If you need to, you can edit the text here to fix any errors and then re-import.
+- Paste the full statblock text into this box. It should follow WotC formatting to be imported correctly. Markdown is supported too.
+- You can click on the &quot;Parse&quot; button above to preview all the information that the module is able to parse from the text (the &quot;Auto Parse&quot; checkbox will automatically do that for you after every change).
+- If you need to, you can edit the text here to fix any errors. The &quot;Import&quot; button below will parse and create the actor based on the current text.
 
 Report any bugs using the module link, and add the statblock you were trying to import."></div>
     <section id="sbi-bottom">
         <span id="sbi-import-text">Folder to import to:</span>
         <select id="sbi-import-select"></select>
-        <button id="sbi-import-button" type="button">Import</button>
+        <button id="sbi-import-button" type="button" data-action="import">Import</button>
     </section>
 </form>

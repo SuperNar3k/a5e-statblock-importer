@@ -1,83 +1,35 @@
-export class BlockID {
-    static armor = "armor";
-    static actions = "actions";
-    static abilities = "abilities";
-    static bonusActions = "bonusActions";
-    static challenge = "challenge";
-    static conditionImmunities = "conditionImmunities";
-    static damageImmunities = "damageImmunities";
-    static immunities2024 = "immunities2024";
-    static damageResistances = "damageResistances";
-    static damageVulnerabilities = "damageVulnerabilities";
-    static features = "features";
-    static health = "health";
-    static lairActions = "lairActions";
-    static languages = "languages";
-    static legendaryActions = "legendaryActions";
-    static mythicActions = "mythicActions";
-    static proficiencyBonus = "proficiencyBonus";
-    static racialDetails = "racialDetails";
-    static reactions = "reactions";
-    static savingThrows = "savingThrows";
-    static senses = "senses";
-    static skills = "skills";
-    static souls = "souls";
-    static speed = "speed";
-    static traits = "traits";
-    static utilitySpells = "utilitySpells";
-    static villainActions = "villainActions";
+export const Blocks = {
+    abilities: {id: "abilities", name: "Abilities", top: true},
+    actions: {id: "actions", name: "Actions"},
+    armor: {id: "armor", name: "Armor", top: true},
+    bonusActions: {id: "bonusActions", name: "Bonus Actions"},
+    challenge: {id: "challenge", name: "Challenge", top: true},
+    conditionImmunities: {id: "conditionImmunities", name: "Condition Immunities", top: true},
+    damageImmunities: {id: "damageImmunities", name: "Damage Immunities", top: true},
+    immunities2024: {id: "immunities2024", name: "Immunities", top: true},
+    damageResistances: {id: "damageResistances", name: "Damage Resistances", top: true},
+    damageVulnerabilities: {id: "damageVulnerabilities", name: "Damage Vulnerabilities", top: true},
+    features: {id: "features", name: "Features"},
+    gear: {id: "gear", name: "Gear", top: true},
+    health: {id: "health", name: "Health", top: true},
+    initiative: {id: "initiative", name: "Initiative", top: true},
+    lairActions: {id: "lairActions", name: "Lair Actions"},
+    languages: {id: "languages", name: "Languages", top: true},
+    legendaryActions: {id: "legendaryActions", name: "Legendary Actions"},
+    mythicActions: {id: "mythicActions", name: "Mythic Actions"},
+    name: {id: "name", name: "Name"},
+    proficiencyBonus: {id: "proficiencyBonus", name: "Proficiency Bonus", top: true},
+    racialDetails: {id: "racialDetails", name: "Racial Details", top: true},
+    reactions: {id: "reactions", name: "Reactions"},
+    savingThrows: {id: "savingThrows", name: "Saving Throws", top: true},
+    senses: {id: "senses", name: "Senses", top: true},
+    skills: {id: "skills", name: "Skills", top: true},
+    souls: {id: "souls", name: "Souls", top: true},
+    speed: {id: "speed", name: "Speed", top: true},
+    traits: {id: "traits", name: "Traits"},
+    utilitySpells: {id: "utilitySpells", name: "Utility Spells"},
+    villainActions: {id: "villainActions", name: "Villain Actions"}
 }
-
-export const BlockName = {
-    name: "Name",
-    armor: "Armor",
-    actions: "Actions",
-    abilities: "Abilities",
-    bonusActions: "Bonus Actions",
-    challenge: "Challenge",
-    conditionImmunities: "Condition Immunities",
-    damageImmunities: "Damage Immunities",
-    immunities2024: "Immunities",
-    damageResistances: "Damage Resistances",
-    damageVulnerabilities: "Damage Vulnerabilities",
-    features: "Features",
-    health: "Health",
-    lairActions: "Lair Actions",
-    languages: "Languages",
-    legendaryActions: "Legendary Actions",
-    mythicActions: "Mythic Actions",
-    proficiencyBonus: "Proficiency Bonus",
-    racialDetails: "Racial Details",
-    reactions: "Reactions",
-    savingThrows: "Saving Throws",
-    senses: "Senses",
-    skills: "Skills",
-    souls: "Souls",
-    speed: "Speed",
-    traits: "Traits",
-    utilitySpells: "Utility Spells",
-    villainActions: "Villain Actions"
-}
-
-export const TopBlocks = [
-    BlockID.armor,
-    BlockID.abilities,
-    BlockID.challenge,
-    BlockID.conditionImmunities,
-    BlockID.damageImmunities,
-    BlockID.immunities2024,
-    BlockID.damageResistances,
-    BlockID.damageVulnerabilities,
-    BlockID.health,
-    BlockID.languages,
-    BlockID.proficiencyBonus,
-    BlockID.racialDetails,
-    BlockID.savingThrows,
-    BlockID.senses,
-    BlockID.skills,
-    BlockID.souls,
-    BlockID.speed,
-]
 
 export class DamageConditionId {
     static immunities = "immunities";
@@ -101,47 +53,6 @@ export const KnownCreatureTypes = [
     "ooze",
     "undead"
 ];
-
-export class CreatureData {
-    constructor(name) {
-        this.name = name;                           // string
-        this.actions = [];                          // NameValueData[]
-        this.armor = null;                          // ArmorData
-        this.abilities = [];                        // NameValueData[]
-        this.alignment = null;                      // string
-        this.bonusActions = [];                     // NameValueData[]
-        this.challenge = null;                      // ChallengeData
-        this.features = [];                         // NameValueData[]
-        this.health = null;                         // RollData
-        this.language = null;                       // LanguageData
-        this.lairActions = [];                      // NameValueData[]
-        this.legendaryActions = [];                 // NameValueData[]
-        this.mythicActions = [];                    // NameValueData[]
-        this.reactions = [];                        // NameValueData[]
-        this.role = null;                           // string           (MCDM)
-        this.savingThrows = [];                     // string[]
-        this.senses = [];                           // NameValueData[]
-        this.specialSense = null;                   // string
-        this.skills = [];                           // NameValueData[]
-        this.speeds = [];                           // NameValueData[]
-        this.spellcasting = [];                     // NameValueData[]
-        this.innateSpellcasting = [];               // NameValueData[]
-        this.size = null;                           // string
-        this.souls = null;                          // RollData
-        this.race = null;                           // string
-        this.type = null;                           // string
-        this.utilitySpells = [];                    // NameValueData[]  (MCDM)
-        this.villainActions = [];                   // NameValueData[]  (MCDM)
-        this.standardConditionImmunities = [];      // string[]
-        this.standardDamageImmunities = [];         // string[]
-        this.standardDamageResistances = [];        // string[]
-        this.standardDamageVulnerabilities = [];    // string[]
-        this.specialConditionImmunities = null;     // string
-        this.specialDamageImmunities = null;        // string
-        this.specialDamageResistances = null;       // string
-        this.specialDamageVulnerabilities = null;   // string
-    }
-}
 
 /*
 name: string
@@ -190,10 +101,13 @@ export class RollData {
 /*
 knownLanguages: string[]
 unknownLanguages: string[]
+telepathy: int
 */
 export class LanguageData {
-    constructor(knownLanguages, unknownLanguages) {
+    constructor(knownLanguages, unknownLanguages, telepathy) {
         this.knownLanguages = knownLanguages;
         this.unknownLanguages = unknownLanguages;
+        this.telepathy = telepathy;
     }
 }
+

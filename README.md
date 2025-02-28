@@ -3,27 +3,27 @@
 ![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2F5e-statblock-importer&colorB=blueviolet)
 ![License](https://img.shields.io/github/license/Aioros/5e-statblock-importer)
 
-# 5e-statblock-importer
-A module for the FoundryVTT **DND5e - Fifth Edition System**. Easily import 5e monster and NPC statblocks into your game. As long as it's formatted using the standard WotC layout, it'll create a new actor with an NPC character sheet using those stats.
+# 5e Statblock Importer
+A module for FoundryVTT's **Dungeons & Dragons Fifth Edition** System. Easily import 5e monster and NPC statblocks into your game. As long as it's formatted using the standard WotC layout, it'll create a new actor with an NPC character sheet using those stats.
 
 ## How to use
-Once installed, you'll see a new button at the bottom of the characters tab that looks like this...
+Once installed, you'll see a new button at the bottom of the characters tab that looks like this:
 
 ![image](https://user-images.githubusercontent.com/5131886/128588603-cbbc558c-8ae5-4005-a56f-0c28afb6fcfd.png)
 
 Clicking the button will open a window with a big text box that you can past the statblock into. Here's an example of one for a Glabrezu from the [SRD](https://dnd.wizards.com/articles/features/systems-reference-document-srd).
 
-![image](https://user-images.githubusercontent.com/5131886/128588988-0a501b2c-b1c7-4ed8-ae8f-4396325f7a4f.png)
+![image](https://github.com/user-attachments/assets/88767a1a-1ed1-45bd-a769-4c7f5ef4444b)
 
-After you've pasted it in, click the "Import" button and you'll see a new actor appear in the side panel.
+You can parse the text with the "Parse" button (or, if the "Auto parse" option is checked, the text will be parsed automatically every time you paste it or modify it). Parsing will underline all the information that was found in the statblock, so you can check that everything is in order before importing.
+If you're satisfied with the preview, click the "Import" button and you'll see a new actor appear in the side panel.
 
 ![image](https://user-images.githubusercontent.com/5131886/128589018-48fc68f1-6e82-46fb-9d49-4e420cca3a26.png)
 
 Open the character sheet for that new actor and you'll see all of the stats, actions, and spells filled out for you. Everything in the statblock should be represented on the character sheet, including legendary actions and reactions (which the Glabrezu doesn't have). To have the spells show up in the Spellbook requires having the "Spells (SRD)" compendium installed, which should come with the 5e system.
 
-![image](https://user-images.githubusercontent.com/5131886/128589035-e94c92f7-e515-4daa-9670-e3d599282faf.png)
-![image](https://user-images.githubusercontent.com/5131886/128589301-f9c7e640-0e2c-4611-aa05-d2e535babc41.png)
-![image](https://user-images.githubusercontent.com/5131886/128589059-c4a57931-9ed8-43cb-85ce-32f07d783777.png)
+![image](https://github.com/user-attachments/assets/f6e20048-86ab-4457-ad95-328ce213397e)
+![image](https://github.com/user-attachments/assets/7813a4cf-9f11-43e7-95c2-db9c27f0b315)
 
 Here's the text if you want to try it yourself and don't have any statblocks handy.
 
@@ -72,8 +72,11 @@ target. Hit: 7 (2d4 + 2) bludgeoning damage.
 If you find a statblock that doesn't import correctly, open an issue [here](https://github.com/Aioros/5e-statblock-importer/issues) and include the text that you were trying to use.
 
 ## Credit
+Most of the work on this module was done by [James Haywood](https://github.com/jbhaywood). This fork aims to continue improving and supporting new formats and new Foundry/dnd5e versions while keeping the original vision intact.
+
+## Original Credit
 This module was based on the [Pathfinder 1e Statblock Library](https://github.com/baileymh/statblock-library) module because I hadn't made a module before and needed a place to start.
 
 ## License
 This work is licensed under Foundry Virtual Tabletop [EULA - Limited License Agreement for module development v 0.1.6](http://foundryvtt.com/pages/license.html).  
-This Foundry VTT module, writen by James Haywood, is licensed under the [MIT License](https://github.com/Aioros/5e-statblock-importer/blob/main/LICENSE).
+This Foundry VTT module, originally written by James Haywood, is licensed under the [MIT License](https://github.com/Aioros/5e-statblock-importer/blob/main/LICENSE).
