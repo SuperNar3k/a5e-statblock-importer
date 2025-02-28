@@ -130,24 +130,27 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
                     const spanStart = matchData[md].indices[0];
                     const spanEnd = matchData[md].indices[1];
 
-                    // We check if this match is inside the "previous" one, like "1st level (4 slots)" where the number of slots is inside the spell group name.
+                    // We check if this match is inside a "previous" one, like "1st level (4 slots)" where the number of slots is inside the spell group name.
                     // We only manage one level of nesting, it should be enough.
-                    if (md > 0 && matchData[md - 1].indices[1] > spanEnd) {
-                        // The "previous" span encompasses this one, we insert the parent span end first and mark it as done
-                        line = [line.slice(0, matchData[md - 1].indices[1]), "</span>", line.slice(matchData[md - 1].indices[1])].join("");
-                        encompassingEndDoneIndex = md - 1;
+                    const parentSpanIndex = matchData.slice(0, md).findIndex(m => m.indices[1] > spanEnd);
+                    if (parentSpanIndex !== -1 && parentSpanIndex !== encompassingEndDoneIndex) {
+                        // The "previous" span encompasses this one, and we didn't already process that, so we insert the parent span end first and mark it as done
+                        line = [line.slice(0, matchData[parentSpanIndex].indices[1]), "</span>", line.slice(matchData[parentSpanIndex].indices[1])].join("");
+                        encompassingEndDoneIndex = parentSpanIndex;
                     }
+
                     // We only add the span end if it's not been done already
                     if (encompassingEndDoneIndex !== md) {
                         line = [line.slice(0, spanEnd), "</span>", line.slice(spanEnd)].join("");
                     }
+
                     line = [
                         line.slice(0, spanStart),
                         `<span class="matched" data-tooltip="${Blocks[block].name + ": " + sbiUtils.camelToTitleUpperIfTwoLetters(matchData[md].label)}">`,
                         line.slice(spanStart)
                     ].join("").trim();
                 }
-
+                
                 spanLine.innerHTML = line;
                 return spanLine;
             });
