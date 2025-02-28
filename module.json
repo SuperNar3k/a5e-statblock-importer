@@ -1,13 +1,11 @@
 {
     "id": "5e-statblock-importer",
-    "name": "5e-statblock-importer",
     "title": "5e Statblock Importer",
     "description": "Import monster and NPC statblocks for D&D 5e",
     "version": "2.0.0",
     "compatibility": {
-        "minimum": "12",
-        "maximum": "13",
-        "verified": "12.331"
+        "minimum": "12.331",
+        "verified": "13.336"
     },
     "authors": [
         {

@@ -4,8 +4,19 @@
     height: 100%;
 }
 
+#sbi-top label {
+    flex: 0;
+    flex-basis: 80px;
+}
+
+#sbi-top .form-fields {
+    flex: 1;
+    justify-content: flex-start;
+}
+
 #sbi-main-button {
     width: 97%;
+    height: 28px;
 }
 
 #sbi-bottom {
