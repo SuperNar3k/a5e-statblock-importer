@@ -89,6 +89,12 @@ export class sbiActor {
     enrichDescription(description) {
         let enrichedDescription = description;
 
+        function compareItems(a, b) {
+            const simpleA = a.toLowerCase().replace(/[\W_]/g, "_").replace(/s$/, "");
+            const simpleB = b.toLowerCase().replace(/[\W_]/g, "_").replace(/s$/, "");
+            return simpleA === simpleB;
+        }
+
         // These are mostly 2024 formats, see if we can do the same for 2014
         enrichedDescription = enrichedDescription.replace(/(?<=(?:roll|attack):)\s?\+\d+/i, " [[/attack]]");
         enrichedDescription = enrichedDescription.replace(/(?<=\bhit:)[\sd\(\)\d\+]+(\w+\s)?damage(\splus\s[\sd\(\)\d\+]+(\w+\s)?damage)?/i, " [[/damage average]] damage");;
@@ -103,12 +109,16 @@ export class sbiActor {
 
         // Enrich references to existing actions
         enrichedDescription = enrichedDescription.replace(sRegex.makesAttack, (match, ...groups) => {
-            const attacks = groups.slice(0, 6).filter(a => a);
+            const attacks = groups.slice(0, 10).filter(a => a);
             let result = match;
             attacks.forEach(attack => {
-                const matchedAction = this.actions.find(a => a.name.toLowerCase().replace(/[\W_]/g, "_") === attack.toLowerCase().replace(/[\W_]/g, "_"));
-                if (matchedAction) {
-                    result = result.replace(attack, "[[/item " + matchedAction.name + "]]");
+                if (attack.toLowerCase() === "spellcasting") {
+                    result = result.replace(attack, "[[/item Spellcasting]]");
+                } else {
+                    const matchedAction = this.actions.find(a => compareItems(a.name, attack));
+                    if (matchedAction) {
+                        result = result.replace(attack, "[[/item " + matchedAction.name + "]]");
+                    }
                 }
             });
             return result;
@@ -117,13 +127,13 @@ export class sbiActor {
         enrichedDescription = enrichedDescription.replace(/(?<=a\suse\sof\s(\(\w\)\s)?spellcasting\sto\scast\s)(?<spellName>(?:[^,.:;\s]|\s(?!\())+)/i, (match) => {
             let uuid;
             if (!game.settings.get(MODULE_NAME, "spellsAsActivities")) {
-                uuid = this.#dnd5e.items?.find(i => i.type === "spell" && i.name.toLowerCase().replace(/[\W_]/g, "_") === match.toLowerCase().replace(/[\W_]/g, "_"))?.sourceUuid;
+                uuid = this.#dnd5e.items?.find(i => i.type === "spell" && compareItems(i.name, match))?.sourceUuid;
             } else {
                 uuid = this.spellcastingFeature.spellInfo
                     .filter(spellGroup => spellGroup.name !== "Description")
                     .map(spellGroup => spellGroup.value)
                     .flat()
-                    .find(spell => spell.name.toLowerCase().replace(/[\W_]/g, "_") === match.toLowerCase().replace(/[\W_]/g, "_"))?.uuid;
+                    .find(spell => compareItems(spell.name, match))?.uuid;
             }
             if (uuid) return "<em>@UUID[" + uuid + "]</em>";
             return match;
@@ -226,6 +236,11 @@ export class sbiActor {
                 foundry.utils.setProperty(itemData, "system.equipped", true);
                 foundry.utils.setProperty(itemData, "system.proficient", true);
 
+                // Lair Actions are often not included in the statblock itself. We check our major actions description for lair mentions
+                if (/\bin\slair\b/i.test(actionData.value.lines[0].line)) {
+                    this.set5eProperty("system.resources.lair.value", true);
+                }
+
                 // Determine whether this is a legendary or lair action.
                 if (type === Blocks.lairActions.id) {
                     // Lair actions don't use titles, so it's just one item with all actions included in the description text.
@@ -308,6 +323,19 @@ export class sbiActor {
 
     setAttackOrSave(actionData, itemData) {
         let attackActivityId, saveActivityId;
+        let condition = actionData.value.attack?.condition || actionData.value.save?.condition;
+        let effect;
+
+        if (condition) {
+            effect = {
+                _id: foundry.utils.randomID(),
+                name: itemData.name + ": " + sUtils.capitalizeAll(condition),
+                img: itemData.img ?? `systems/dnd5e/icons/svg/statuses/${condition.toLowerCase()}.svg`,
+                transfer: false,
+                type: "base",
+                statuses: [condition.toLowerCase()],
+            };
+        }
 
         if (actionData.value.attack) {
             itemData.type = "weapon";
@@ -333,6 +361,11 @@ export class sbiActor {
                 foundry.utils.setProperty(itemData, `system.activities.${attackActivityId}.attack.flat`, true);
                 foundry.utils.setProperty(itemData, `system.activities.${attackActivityId}.attack.bonus`, parseInt(actionData.value.attack.toHit));
             }
+
+            if (actionData.value.attack.condition) {
+                foundry.utils.setProperty(itemData, "effects", [effect, ...(itemData.effects || [])]);
+                foundry.utils.setProperty(itemData, `system.activities.${attackActivityId}.effects`, [{_id: effect._id}]);
+            }
         }
 
         if (actionData.value.save) {
@@ -341,16 +374,7 @@ export class sbiActor {
             foundry.utils.setProperty(itemData, `system.activities.${saveActivityId}.damage.onSave`, actionData.value.save.damageOnSave);
             foundry.utils.setProperty(itemData, `system.activities.${saveActivityId}.save`, {ability: sUtils.convertToShortAbility(actionData.value.save.ability), dc: {formula: parseInt(actionData.value.save.dc)}});
 
-            // also add new effect to item, and set it in the activity
             if (actionData.value.save.condition) {
-                const effect = {
-                    _id: foundry.utils.randomID(),
-                    name: itemData.name + ": " + sUtils.capitalizeAll(actionData.value.save.condition),
-                    img: itemData.img,
-                    transfer: false,
-                    type: "base",
-                    statuses: [actionData.value.save.condition.toLowerCase()],
-                };
                 foundry.utils.setProperty(itemData, "effects", [effect, ...(itemData.effects || [])]);
                 foundry.utils.setProperty(itemData, `system.activities.${saveActivityId}.effects`, [{_id: effect._id, onSave: false}]);
             }
@@ -458,7 +482,7 @@ export class sbiActor {
         for (const featureData of this.features) {
             const name = featureData.name;
             const nameLower = name.toLowerCase();
-            const description = sUtils.combineSourceLines(featureData.value.lines);
+            const description = this.enrichDescription(sUtils.combineSourceLines(featureData.value.lines));
             const itemData = {};
 
             itemData.name = sUtils.capitalizeAll(name);
@@ -468,6 +492,11 @@ export class sbiActor {
             this.setAttackOrSave(featureData, itemData);
 
             if (nameLower.startsWith("legendary resistance")) {
+                // Lair Actions are often not included in the statblock itself. We check the legendary resistance description for lair mentions
+                if (/\bin\slair\b/i.test(featureData.value.lines[0].line)) {
+                    this.set5eProperty("system.resources.lair.value", true);
+                }
+
                 let activityId = foundry.utils.randomID();
                 if (featureData.value.legendaryResistanceCount) {
                     this.set5eProperty("system.resources.legres.value", featureData.value.legendaryResistanceCount);
@@ -927,6 +956,8 @@ export class sbiActor {
     }
 
     async setSpellcasting(spellcastingType) {
+        const isInnate = ["innateSpellcasting", "utilitySpells"].includes(spellcastingType);
+
         const { featureName, spellcastingDetails, spellInfo } = this[spellcastingType];
         const description = spellInfo[0].value.replace(new RegExp(`${featureName}\\s*(\\([^)]*\\))?\\.`, "ig"), "");
 
@@ -952,7 +983,7 @@ export class sbiActor {
         }
 
         // Add spells to actor.
-        const useActivities = game.settings.get(MODULE_NAME, "spellsAsActivities");
+        const useActivities = game.settings.get(MODULE_NAME, "spellsAsActivities") && isInnate;
         for (const spellObj of spellObjs) {
             let castActivity = {_id: foundry.utils.randomID(), type: "cast"};
             castActivity.name = spellObj.name; // This is not actually going to be saved (name is going to be derived from the spell itself), but we need it to compare later
@@ -970,7 +1001,7 @@ export class sbiActor {
 
             if (spellObj.type === "slots") {
                 // Update the actor's number of slots per level.
-                this.set5eProperty(`system.spells.spell${spell.system.level}.max`, spellObj.count);
+                this.set5eProperty(`system.spells.spell${spell.system.level}.value`, spellObj.count);
                 this.set5eProperty(`system.spells.spell${spell.system.level}.override`, spellObj.count);
                 if (!useActivities) {
                     foundry.utils.setProperty(spell, "system.preparation.prepared", true);

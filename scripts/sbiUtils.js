@@ -253,53 +253,53 @@ export class sbiUtils {
 
     // Given an array of strings, returns an array of strings, each representing one sentence.
     // I'm trying to find a way to NOT have to do this at all
-    static makeSentences(lines) {
-        let sentences = [];
-        let newSentence = "";
-        let sourceStart = {lineNumber: null, index: 0};
-        let sourceEnd = {lineNumber: null, index: 0};
-        for (let {lineNumber, line} of lines) {
-            sourceStart.lineNumber ||= lineNumber;
-            sourceEnd.lineNumber = lineNumber;
-            sourceEnd.index = 0;
-            if (newSentence) newSentence += " ";
-            // Split on "." or "!", except for "ft."
-            const parts = line.split(/(?<!ft)[.!]/);
-            for (let p=0; p<parts.length; p++) {
-                newSentence += parts[p];
-                sourceEnd.index += parts[p].length;
-                if (p < parts.length - 1) {
-                    sentences.push({line: newSentence, sourceStart: foundry.utils.deepClone(sourceStart), sourceEnd: foundry.utils.deepClone(sourceEnd)});
-                    newSentence = "";
-                    sourceStart.lineNumber = lineNumber;
-                    sourceEnd.lineNumber = lineNumber;
-                    sourceStart.index = sourceEnd.index + 1;
-                }
-            }
-        }
-        if (newSentence) sentences.push({line: newSentence, sourceStart: foundry.utils.deepClone(sourceStart), sourceEnd: foundry.utils.deepClone(sourceEnd)});
-
-        sentences.forEach(s => {
-            if (s.line.startsWith(" ")) {
-                s.line = s.line.slice(1);
-                s.sourceStart.index++;
-            }
-            if (s.line.endsWith(" ")) {
-                s.line = s.line.slice(-1);
-                s.sourceEnd.index--;
-            }
-            s.line += ".";
-        });
-        return sentences;
-    }
-
-    // Given an array of strings, returns an array of strings, each representing one sentence.
-    static makeSentencesOld(strings) {
-        return this.combineToString(strings)
-            .split(/[.!]/)
-            .filter(str => str)
-            .map(str => str.trim(" ") + ".");
-    }
+    //static makeSentences(lines) {
+    //    let sentences = [];
+    //    let newSentence = "";
+    //    let sourceStart = {lineNumber: null, index: 0};
+    //    let sourceEnd = {lineNumber: null, index: 0};
+    //    for (let {lineNumber, line} of lines) {
+    //        sourceStart.lineNumber ||= lineNumber;
+    //        sourceEnd.lineNumber = lineNumber;
+    //        sourceEnd.index = 0;
+    //        if (newSentence) newSentence += " ";
+    //        // Split on "." or "!", except for "ft."
+    //        const parts = line.split(/(?<!ft)[.!]/);
+    //        for (let p=0; p<parts.length; p++) {
+    //            newSentence += parts[p];
+    //            sourceEnd.index += parts[p].length;
+    //            if (p < parts.length - 1) {
+    //                sentences.push({line: newSentence, sourceStart: foundry.utils.deepClone(sourceStart), sourceEnd: foundry.utils.deepClone(sourceEnd)});
+    //                newSentence = "";
+    //                sourceStart.lineNumber = lineNumber;
+    //                sourceEnd.lineNumber = lineNumber;
+    //                sourceStart.index = sourceEnd.index + 1;
+    //            }
+    //        }
+    //    }
+    //    if (newSentence) sentences.push({line: newSentence, sourceStart: foundry.utils.deepClone(sourceStart), sourceEnd: foundry.utils.deepClone(sourceEnd)});
+    //
+    //    sentences.forEach(s => {
+    //        if (s.line.startsWith(" ")) {
+    //            s.line = s.line.slice(1);
+    //            s.sourceStart.index++;
+    //        }
+    //        if (s.line.endsWith(" ")) {
+    //            s.line = s.line.slice(-1);
+    //            s.sourceEnd.index--;
+    //        }
+    //        s.line += ".";
+    //    });
+    //    return sentences;
+    //}
+    //
+    //// Given an array of strings, returns an array of strings, each representing one sentence.
+    //static makeSentencesOld(strings) {
+    //    return this.combineToString(strings)
+    //        .split(/[.!]/)
+    //        .filter(str => str)
+    //        .map(str => str.trim(" ") + ".");
+    //}
 
     // Given an array of strings, returns one string.
     static combineToString(strings) {

@@ -48,8 +48,8 @@ export class sbiRegex {
     static perDayDetails = new RegExp(this.perDayBase, "idg");
     static perDayCountFull = new RegExp(`\\(${this.perDayBase}[\\),;]`, "idg");
     static rollDetails = /(?<value>\d+)\s?(\((?<formula>\d+d\d+(\s?[\+\-−–]\s?\d+)?)\))?/idg;
-    static savingThrowDetails = new RegExp(String.raw`must\s(make|succeed\son)\sa\sdc\s(?<saveDc>\d+)\s(?<saveAbility>\w+)\s(?<saveText>saving\sthrow|save)(?:.*${this.conditionBase})?(?:.*(?<halfDamage>\bhalf\b)[A-Z\s]*damage)?`, "idg");
-    static savingThrowDetails24 = new RegExp(String.raw`(?<saveAbility>\w+)\s(?<saveText>saving throw):\s*dc\s(?<saveDc>\d+)(?:.*${this.conditionBase})?(?:.*success:\s(?<halfDamage>\bhalf\b))?`, "idg");
+    static savingThrowDetails = new RegExp(String.raw`must\s(make|succeed\son)\sa\sdc\s(?<saveDc>\d+)\s(?<saveAbility>\w+)\s(?<saveText>saving\sthrow|save)(?:.*${this.conditionBase})?(?:.*(?<halfDamage>\bhalf\b)[A-Z\s]*damage)?`, "idgs");
+    static savingThrowDetails24 = new RegExp(String.raw`(?<saveAbility>\w+)\s(?<saveText>saving throw):\s*dc\s(?<saveDc>\d+)(?:.*${this.conditionBase})?(?:.*success:\s(?<halfDamage>\bhalf\b))?`, "idgs");
     static sensesDetails = /(?<name>\w+) (?<modifier>\d+)/idg;
     static skillDetails = /(?<name>\bacrobatics\b|\barcana\b|\banimal handling\b|\bathletics\b|\bdeception\b|\bhistory\b|\binsight\b|\bintimidation\b|\binvestigation\b|\bmedicine\b|\bnature\b|\bperception\b|\bperformance\b|\bpersuasion\b|\breligion\b|\bsleight of hand\b|\bstealth\b|\bsurvival\b) (?<modifier>[\+|-]\d+)/idg;
     static speedDetails = /(?<name>\w+)\s?(?<value>\d+)/idg;
@@ -72,8 +72,8 @@ export class sbiRegex {
     static abilitySaves = /(?<name>\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b) (?<modifier>[\+|-]\d+)/ig;
     static abilityValues24 = /(?<base>\d+)\s?(?<modifier>[\+\-−–]?\d+)\s?(?<saveModifier>[\+\-−–]?\d+)/dg;
     static actionCost = /\((costs )?(?<cost>\d+) action(s)?\)/idg;
-    static attack = /\+(?<toHit>\d+)\sto\shit/idg;
-    static attack24 = /attack\sroll:\s*\+(?<toHit>\d+)/idg;
+    static attack = new RegExp(String.raw`\+(?<toHit>\d+)\sto\shit\b(?:(?:.(?!dc\s\d+))*${this.conditionBase})?`, "idgs");
+    static attack24 = new RegExp(String.raw`attack\sroll:\s*\+(?<toHit>\d+)(?:(?:.(?!dc\s\d+))*${this.conditionBase})?`, "idgs");
     static castAction = /^(?<featureName>[^.]+)\.\s?(?<monsterDesc>(?:\w+\s){1,4})(?:\bcasts|\bcan innately cast|\bspellcasting to cast)\s(?!a\s)(?<spellList>.*?),?\s?(?:in response|using|requiring|\.)/idg;
     static castActionSpell = /(?<=^|,|\bor\s)\s?(?:(?:or\s)?(?<spellName>\b(?:[^,.:;](?!or|\())+)(?:\s\(level\s(?<spellLevel>\d+)\sversion\))?)/idg;
     static conditionTypes = new RegExp(this.conditionBase, "idg");
@@ -96,6 +96,11 @@ export class sbiRegex {
     static target = /(?:a\s(?<areaRange>\d+)(?:-?(?:foot|feet|ft?.|'|’)\s(?<shape>\w+))|(?<targetsAmount>each|a|one)\s[\w\s]+?(?:within\s(?<range>\d+)\s(?:foot|feet|ft?.|'|’)))/idg;
 
     // Regexes for description enrichment
-    static makesAttack = /with\sa\suse\sof\s(?:.*\sor\s(?:\(\w\)\s)?)?(?<attack>(?:[^,.:;(\s]+\s?){1,4})(?:[,.:;]|\sto cast)|makes?\s\w+\s(?<attack11>(?:[^,.:;\s]+\s?){1,4})\sattacks?(?:\sand\s\w+\s(?<attack12>(?:[^,.:;\s]+\s?){1,4})\sattacks?)?|makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack21>(?:.(?!or))*)(?:\sor\s(?<attack22>.*))?\sin any combination|(?:\w+\s)?with\sits\s(?<attack31>(?:.(?!and))*)(?:\sand\s\w+\swith\sits\s(?<attack32>[^.]+))?.)/ig;
+    static makesAttack1 = String.raw`with\sa\suse\sof\s(?:.*\sor\s(?:\(\w\)\s)?)?(?<attack1>(?:[^,.:;(\s]+\s?){1,4})(?:[,.:;]|\sto cast)`;
+    static makesAttack2 = String.raw`makes?\s\w+\s(?<attack2>(?:[^,.:;\s]+\s?){1,4})\sattacks?(?:\sand\s\w+\s(?<attack3>(?:[^,.:;\s]+\s?){1,4})\sattacks?)?(?:\sand\suses\s(?<attack4>(?:(?:[^,.:;](?!or))+))(?:\sor\s(?<attack5>\w+))?)?`;
+    static makesAttack3 = String.raw`makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack6>(?:.(?!or))*)(?:\sor\s(?<attack7>.*))?\sin any combination|(?:\w+\s)?with\sits\s(?<attack8>(?:.(?!and))*)(?:\sand\s\w+\swith\sits\s(?<attack9>[^.]+))?.)`;
+    static makesAttack4 = String.raw`\suses?\sits\s(?<attack10>(?:[^.,:;](?!or))*)`
+    //static makesAttack = /with\sa\suse\sof\s(?:.*\sor\s(?:\(\w\)\s)?)?(?<attack1>(?:[^,.:;(\s]+\s?){1,4})(?:[,.:;]|\sto cast)|makes?\s\w+\s(?<attack2>(?:[^,.:;\s]+\s?){1,4})\sattacks?(?:\sand\s\w+\s(?<attack3>(?:[^,.:;\s]+\s?){1,4})\sattacks?)?(?:\sand\suses\s(?<attack4>(?:(?:[^,.:;](?!or))+))(?:\sor\s(?<attack5>\w+))?)?|makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack6>(?:.(?!or))*)(?:\sor\s(?<attack7>.*))?\sin any combination|(?:\w+\s)?with\sits\s(?<attack8>(?:.(?!and))*)(?:\sand\s\w+\swith\sits\s(?<attack9>[^.]+))?.)/ig;
+    static makesAttack = new RegExp(this.makesAttack1 + "|" + this.makesAttack2 + "|" + this.makesAttack3 + "|" + this.makesAttack4, "igs");
 
 }

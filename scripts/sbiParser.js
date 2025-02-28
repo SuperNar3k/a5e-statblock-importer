@@ -277,7 +277,7 @@ export class sbiParser {
         const armorTypes = match.groups.armorType?.split(",").map(str => str.trim()) || [];
 
         this.actor.armor = new ArmorData(parseInt(ac), armorTypes.filter(t => t === "natural armor"));
-        this.actor.gear.push(...armorTypes.filter(t => t !== "natural armor"));
+        this.actor.gear.push(...armorTypes.filter(t => t !== "natural armor").map(t => new NameValueData(t.toLowerCase(), 1)));
 
         if (match.groups.initiativeModifier) {
             this.actor.initiative = {mod: parseInt(match.groups.initiativeModifier), score: parseInt(match.groups.initiativeScore)};
@@ -578,7 +578,7 @@ export class sbiParser {
         if (type === Blocks.features.id) {
             for (const actionData of this.getBlockDatas(lines)) {
                 // e.g. "Spellcasting", "Innate Spellcasting", "Innate Spellcasting (Psionics)"
-                const isSpellcasting = !!/^(innate )?spellcasting( \([^)\/]+\))?$/i.test(actionData.value.lines[0].line);
+                const isSpellcasting = !!/^(innate )?spellcasting( \([^)\/]+\))?\./i.test(actionData.value.lines[0].line);
                 if (isSpellcasting) {
                     const { spellcastingType, spellcastingDetails, spellInfo } = this.getSpells(actionData);
                     this.actor[spellcastingType] = {featureName: actionData.name, spellcastingDetails, spellInfo};
@@ -670,7 +670,7 @@ export class sbiParser {
             };
         }
         if (attackMatch) {
-            actionData.value.attack = {toHit: attackMatch.groups.toHit};            
+            actionData.value.attack = {toHit: attackMatch.groups.toHit, condition: attackMatch.groups.condition};
         }
         const damageRollMatch = this.matchAndAnnotate(actionData.value.lines, sRegex.damageRoll)?.[0];
         if (damageRollMatch) {

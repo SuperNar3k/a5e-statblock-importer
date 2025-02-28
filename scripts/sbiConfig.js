@@ -21,8 +21,8 @@ export function registerSettings() {
     });
 
     game.settings.register(MODULE_NAME, "spellsAsActivities", {
-        name: "Import Spells as Activities",
-        hint: "If selected, spells will be added as cast activities inside the Spellcasting feature. If not selected, they will appear independently in the Spells section of the sheet",
+        name: "Import Innate Spells as Activities",
+        hint: "If selected, innate spells will be added as cast activities inside the Spellcasting feature. If not selected, they will appear independently in the Spells section of the sheet",
         scope: "client",
         config: true,
         type: Boolean,
