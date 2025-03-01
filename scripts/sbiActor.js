@@ -693,7 +693,7 @@ export class sbiActor {
 
     async setGear() {
         for (const gearItem of this.gear) {
-            const actionItem = this.#dnd5e.items.find(i => i.type === "weapon" && (i.name.toLowerCase() === gearItem.name || i.name.toLowerCase() + "s" === gearItem.name));
+            const actionItem = this.#dnd5e.items?.find(i => i.type === "weapon" && (i.name.toLowerCase() === gearItem.name || i.name.toLowerCase() + "s" === gearItem.name));
             if (actionItem) {
                 actionItem.system.quantity = gearItem.value;
                 continue;
