@@ -55,7 +55,7 @@ export function getPacks() {
     const srdCollection = game.settings.get("dnd5e", "rulesVersion") === "legacy" ? "dnd5e.legacy-spells" : "dnd5e.spells";
     // This is assuming that the old SRD packs will be prepended with "legacy-" (look at https://github.com/foundryvtt/dnd5e/commit/60392a1dbd86bcbf55fa635b4bd9dfa2cdf91ba3), while the new one will get the original name.
     // The appropriate one according to the rules setting will be locked as active.
-    const srd = spellCompendiums.find(p => p.collection === srdCollection);
+    let srd = spellCompendiums.find(p => p.collection === srdCollection);
     if (!srd) {
         // This happens in the interim, when the "legacy-" one doesn't exist yet.
         srd = spellCompendiums.find(p => p.collection === "dnd5e.spells");

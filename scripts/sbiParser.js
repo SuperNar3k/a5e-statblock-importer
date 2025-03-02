@@ -276,8 +276,8 @@ export class sbiParser {
         // Armor types, like "natural armor" or "leather armor, shield"
         const armorTypes = match.groups.armorType?.split(",").map(str => str.trim()) || [];
 
-        this.actor.armor = new ArmorData(parseInt(ac), armorTypes.filter(t => t === "natural armor"));
-        this.actor.gear.push(...armorTypes.filter(t => t !== "natural armor").map(t => new NameValueData(t.toLowerCase(), 1)));
+        this.actor.armor = new ArmorData(parseInt(ac), armorTypes.filter(t => t.toLowerCase() === "natural armor"));
+        this.actor.gear.push(...armorTypes.filter(t => t.toLowerCase() !== "natural armor").map(t => new NameValueData(t.toLowerCase(), 1)));
 
         if (match.groups.initiativeModifier) {
             this.actor.initiative = {mod: parseInt(match.groups.initiativeModifier), score: parseInt(match.groups.initiativeScore)};

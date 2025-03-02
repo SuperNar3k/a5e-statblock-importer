@@ -683,11 +683,13 @@ export class sbiActor {
     }
 
     async setArmor() {
-        if (this.armor.types.includes("natural armor")) {
-            this.set5eProperty("system.attributes.ac.calc", "natural");
-            this.set5eProperty("system.attributes.ac.flat", this.armor.ac);
-        } else {
-            this.set5eProperty("system.attributes.ac.calc", "default");
+        if (this.armor) {
+            if (this.armor.types?.includes("natural armor")) {
+                this.set5eProperty("system.attributes.ac.calc", "natural");
+                this.set5eProperty("system.attributes.ac.flat", this.armor.ac);
+            } else {
+                this.set5eProperty("system.attributes.ac.calc", "default");
+            }
         }
     }
 
