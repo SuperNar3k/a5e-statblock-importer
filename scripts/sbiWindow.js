@@ -98,7 +98,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
         if (input.innerText.trim().length == 0) return;
 
-        const lines = sbiUtils.stripMarkdownAndCleanInput(input.innerText).split("\n");
+        const lines = sbiParser.fixNewLines(sbiUtils.stripMarkdownAndCleanInput(input.innerText)).split("\n");
 
         try {
             const { actor, statBlocks, unknownLines } = sbiParser.parseInput(lines);

@@ -21,6 +21,13 @@ export class sbiParser {
     static actor;
     static statBlocks;
 
+    static fixNewLines(inputText) {
+        // Identify unneeded line breaks, like:
+        // Hit Points
+        // 328 (16d20 + 160)
+        return inputText.replace(sRegex.removeNewLines, "$<header> ");
+    }
+
     static getFirstMatch(line, excludeIds = []) {
         return Object.keys(Blocks).filter(b => !["name", "features"].includes(b)).find(b => line.match(sRegex[b]) && !excludeIds.includes(b));
     }

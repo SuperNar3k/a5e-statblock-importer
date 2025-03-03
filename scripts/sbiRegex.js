@@ -36,6 +36,11 @@ export class sbiRegex {
     static utilitySpells = /^utility spells$/i;
     static villainActions = /^villain actions$/i;
 
+    // This identifies all the block starters that go to a new line instead of having the info in the same one.
+    // This is a lot of repetition. While these rarely change, we might want a cleaner way to derive these.
+    static pureBlockHeader = String.raw`((armor|armour) class|ac)|(challenge|\bcr\b|challenge rating)|condition\simmunities|damage\simmunities|immunities|(damage\s)?resistances|(damage\s)?vulnerabilities|gear|(hit points|\bhp\b)|initiative|languages|proficiency bonus|(saving throws|saves)|senses|skills|souls|speed`;
+    static removeNewLines = new RegExp(String.raw`^(?<header>${this.pureBlockHeader})\s*\n(?!^(${this.pureBlockHeader})\s+)`, "igm");
+
     static conditionBase = String.raw`(?<condition>\bblinded\b|\bcharmed\b|\bdeafened\b|\bdiseased\b|\bexhaustion\b|\bfrightened\b|\bgrappled\b|\bincapacitated\b|\binvisible\b|\bparalyzed\b|\bpetrified\b|\bpoisoned\b|\bprone\b|\brestrained\b|\bstunned\b|\bunconscious\b)`;
 
     // Regexes for pulling the details out of the lines we identified using the ones above.
