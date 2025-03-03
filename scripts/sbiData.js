@@ -79,11 +79,13 @@ export class ArmorData {
 /*
 cr: int
 xp: int
+pb: int
 */
 export class ChallengeData {
-    constructor(cr, xp) {
+    constructor(cr, xp, pb) {
         this.cr = cr;
         this.xp = xp;
+        this.pb = pb;
     }
 }
 

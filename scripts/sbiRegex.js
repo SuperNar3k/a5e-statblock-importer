@@ -20,8 +20,8 @@ export class sbiRegex {
     static languages = /^languages\s/i;
     static legendaryActions = /^legendary actions$/i;
     static mythicActions = /^mythic actions$/i;
-    // Proficiency Bonus isn't used because Foundry calculates it automatically.
-    // This is just here for completeness.
+    // Proficiency Bonus isn't normally used because Foundry calculates it automatically, but could be useful if somehow CR info is missing.
+    // It's often in the Challenge line, but it could be separate, so it's also here.
     static proficiencyBonus = /^proficiency bonus\s\+/i;
     // The racial details line is here instead of below because it doesn't have a 
     // standard starting word, so we have to look at the whole line.
@@ -42,7 +42,9 @@ export class sbiRegex {
     static initiativeDetailsBase = String.raw`(?<initiativeModifier>[\+\-−–]?\d+)(\s+\((?<initiativeScore>\d+)\))?`;
     static initiativeDetails = new RegExp(this.initiativeDetailsBase, "idg");
     static armorDetails = new RegExp(`(?<ac>(?<=\\s)\\d+)(\\s\\((?<armorType>[^)]+)\\))?(\\s+Initiative\\s${this.initiativeDetailsBase})?`, "idg");
-    static challengeDetails = /(?<cr>(½|[\d\/]+))\s?(?<role>[A-Za-z]+)?\s?(\(?(?<xp>[\d,]+)\s?xp\)?)?/idg;
+    static proficiencyBonusBase = String.raw`(?:pb|proficiency\sbonus)\s\+?(?<pb>\d+)`;
+    static proficiencyBonusDetails = new RegExp(this.proficiencyBonusBase, "idg");
+    static challengeDetails = new RegExp(String.raw`(?<cr>(?:½|[\d\/]+))\s?(?<role>[A-Za-z]+)?\s?(?:\(?(?:(?<xp>[\d,]+)\s?xp|xp\s(?<experiencePoints>[\d,]+))(?:\W+${this.proficiencyBonusBase})?)?`, "idg");
     static gearDetails = /(?<=gear|,)\s?(?<name>\w+(?:\s\w+)*)(?:\s?\((?<quantity>\d+)\))?/idg;
     static perDayBase = String.raw`(?<perDay>\d+)\/day`;
     static perDayDetails = new RegExp(this.perDayBase, "idg");

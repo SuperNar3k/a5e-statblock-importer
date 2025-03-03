@@ -146,6 +146,9 @@ export class sbiParser {
                     case Blocks.languages.id:
                         this.parseLanguages(blockData);
                         break;
+                    case Blocks.proficiencyBonus.id:
+                        this.parseProficiencyBonus(blockData);
+                        break;
                     case Blocks.racialDetails.id:
                         this.parseRacialDetails(blockData);
                         break;
@@ -315,12 +318,18 @@ export class sbiParser {
         }
 
         let xp = 0;
-
         if (match.groups.xp) {
             xp = parseInt(match.groups.xp.replace(",", ""));
+        } else if (match.groups.experiencePoints) {
+            xp = parseInt(match.groups.experiencePoints.replace(",", ""));
         }
 
-        this.actor.challenge = new ChallengeData(cr, xp);
+        let pb = 0;
+        if (match.groups.pb) {
+            pb = parseInt(match.groups.pb);
+        }
+
+        this.actor.challenge = new ChallengeData(cr, xp, pb);
 
         // MCDM's "Flee, Mortals!" puts the role alongside the challege rating,
         // so handle that here.
@@ -496,6 +505,14 @@ export class sbiParser {
             .filter(l => l);
 
         this.actor.language = new LanguageData(knownLanguages, unknownLanguages, telepathy);
+    }
+
+    static parseProficiencyBonus(lines) {
+        const match = this.matchAndAnnotate(lines, sRegex.proficiencyBonusDetails)?.[0];
+        if (!match) return;
+
+        this.actor.challenge ??= {};
+        foundry.utils.setProperty(this.actor, "challenge.pb", parseInt(match.groups.pb));
     }
 
     static parseRacialDetails(lines) {

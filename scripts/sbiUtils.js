@@ -48,6 +48,10 @@ export class sbiUtils {
         return 2 + Math.floor((level - 1) / 4);
     }
 
+    static getMinLevel(proficiencyBonus) {
+        return proficiencyBonus * 4 - 7;
+    }
+
     static convertToShortAbility(abilityName) {
         const ability = abilityName.toLowerCase();
 

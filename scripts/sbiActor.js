@@ -722,8 +722,14 @@ export class sbiActor {
     }
 
     setChallenge() {
-        if (!this.challenge) return;
-        this.set5eProperty("system.details.cr", this.challenge.cr);
+        if (this.challenge?.cr) {
+            this.set5eProperty("system.details.cr", this.challenge.cr);
+        } else if (this.challenge?.pb) {
+            this.set5eProperty("system.details.cr", sUtils.getMinLevel(this.challenge.pb));
+        } else {
+            this.set5eProperty("system.details.cr", 0);
+            sUtils.warn("Could not find CR information. Some calculated attack information could be wrong.");
+        }
     }
 
     setDamagesAndConditions() {
