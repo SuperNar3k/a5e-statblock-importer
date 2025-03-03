@@ -447,7 +447,7 @@ export class sbiParser {
 
         let fullLines = sUtils.combineToString(lines.map(l => l.line));
         // Remove the type name.
-        fullLines = fullLines.replace(/^(damage\s|condition\s)?(immunities|resistances|vulnerabilities)/i, "").trim();
+        fullLines = fullLines.replace(/^(damage\s|condition\s)?(immunities|resistances|vulnerabilities)[\s:]*/i, "").trim();
 
         // Now see if there is any custom text we should add.
         let customType = null;

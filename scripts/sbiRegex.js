@@ -2,36 +2,36 @@ export class sbiRegex {
     // Regexes for checking known types of lines. They have to be written carefully 
     // so that it matches on the line we care about, but not any other random line
     // that happens to start with same the word(s).
-    static armor = /^((armor|armour) class|ac)\s\d+/i;
+    static armor = /^((armor|armour) class|ac)[\s:]+\d+/i;
     static actions = /^actions$/i;
     static abilities = /^(\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b|\bMod\s+Save\b)/i;
     static bonusActions = /^bonus actions$/i;
-    static challenge = /^(challenge|\bcr\b|challenge rating)\s\d+/i;
-    static conditionImmunities = /^condition\simmunities\s/i;
-    static damageImmunities = /^damage\simmunities\s/i;
-    static immunities2024 = /^immunities\s/i;
-    static damageResistances = /^(damage\s)?resistances\s/i;
-    static damageVulnerabilities = /^(damage\s)?vulnerabilities\s/i;
-    static gear = /^gear\s/i;
-    static health = /^(hit points|\bhp\b)\s\d+/i;
+    static challenge = /^(challenge|\bcr\b|challenge rating)[\s:]+\d+/i;
+    static conditionImmunities = /^condition\simmunities[\s:]+/i;
+    static damageImmunities = /^damage\simmunities[\s:]+/i;
+    static immunities2024 = /^immunities[\s:]+/i;
+    static damageResistances = /^(damage\s)?resistances[\s:]+/i;
+    static damageVulnerabilities = /^(damage\s)?vulnerabilities[\s:]+/i;
+    static gear = /^gear[\s:]+/i;
+    static health = /^(hit points|\bhp\b)[\s:]+\d+/i;
     // Initiative should be in the same line as AC, but we can expect handcrafted blocks to often have their own line for it, so we will check in both places
-    static initiative = /^initiative\s/i;
+    static initiative = /^initiative[\s:]+/i;
     static lairActions = /^lair actions$/i;
-    static languages = /^languages\s/i;
     static legendaryActions = /^legendary actions$/i;
     static mythicActions = /^mythic actions$/i;
+    static languages = /^languages[\s:]+/i;
     // Proficiency Bonus isn't normally used because Foundry calculates it automatically, but could be useful if somehow CR info is missing.
     // It's often in the Challenge line, but it could be separate, so it's also here.
-    static proficiencyBonus = /^proficiency bonus\s\+/i;
+    static proficiencyBonus = /^proficiency bonus[\s:]+\+/i;
     // The racial details line is here instead of below because it doesn't have a 
     // standard starting word, so we have to look at the whole line.
     static racialDetails = /^(?<size>\bfine\b|\bdiminutive\b|\btiny\b|\bsmall\b|\bmedium\b|\blarge\b|\bhuge\b|\bgargantuan\b|\bcolossal\b)(\sor\s\w+)?(\sswarm of (?<swarmSize>\w+))?\s(?<type>\w+)([,\s]+\((?<race>[,\w\s]+)\))?([,\s]+(?<alignment>[\w\s\-]+))?/idg;
     static reactions = /^reactions$/i;
-    static savingThrows = /^(saving throws|saves)\s(\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b)/i;
+    static savingThrows = /^(saving throws|saves)[\s:]+(\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b)/i;
     static senses = /^senses( passive)?(.+\d+\s\bft\b)?/i;
     static skills = /^skills.+[\+-]\d+/i;
-    static souls = /^souls\s\d+/i;
-    static speed = /^speed\s\d+\sft/i;
+    static souls = /^souls[\s:]+\d+/i;
+    static speed = /^speed[\s:]+\d+\sft/i;
     static traits = /^traits$/i;
     static utilitySpells = /^utility spells$/i;
     static villainActions = /^villain actions$/i;
@@ -46,7 +46,7 @@ export class sbiRegex {
     // Regexes for pulling the details out of the lines we identified using the ones above.
     static initiativeDetailsBase = String.raw`(?<initiativeModifier>[\+\-−–]?\d+)(\s+\((?<initiativeScore>\d+)\))?`;
     static initiativeDetails = new RegExp(this.initiativeDetailsBase, "idg");
-    static armorDetails = new RegExp(`(?<ac>(?<=\\s)\\d+)(\\s\\((?<armorType>[^)]+)\\))?(\\s+Initiative\\s${this.initiativeDetailsBase})?`, "idg");
+    static armorDetails = new RegExp(String.raw`(?<ac>(?<=\s)\d+)(\s\((?<armorType>[^)]+)\))?(\s+Initiative\s${this.initiativeDetailsBase})?`, "idg");
     static proficiencyBonusBase = String.raw`(?:pb|proficiency\sbonus)\s\+?(?<pb>\d+)`;
     static proficiencyBonusDetails = new RegExp(this.proficiencyBonusBase, "idg");
     static challengeDetails = new RegExp(String.raw`(?<cr>(?:½|[\d\/]+))\s?(?<role>[A-Za-z]+)?\s?(?:\(?(?:(?<xp>[\d,]+)\s?xp|xp\s(?<experiencePoints>[\d,]+))(?:\W+${this.proficiencyBonusBase})?)?`, "idg");
