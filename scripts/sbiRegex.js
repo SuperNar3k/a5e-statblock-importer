@@ -17,9 +17,9 @@ export class sbiRegex {
     // Initiative should be in the same line as AC, but we can expect handcrafted blocks to often have their own line for it, so we will check in both places
     static initiative = /^initiative[\s:]+/i;
     static lairActions = /^lair actions$/i;
-    static legendaryActions = /^legendary actions$/i;
-    static mythicActions = /^mythic actions$/i;
     static languages = /^languages[\s:]+/i;
+    static legendaryActions = /^legendary actions(\s+\([^\)]*\)$)?/i;
+    static mythicActions = /^mythic actions(\s+\([^\)]*\)$)?/i;
     // Proficiency Bonus isn't normally used because Foundry calculates it automatically, but could be useful if somehow CR info is missing.
     // It's often in the Challenge line, but it could be separate, so it's also here.
     static proficiencyBonus = /^proficiency bonus[\s:]+\+/i;

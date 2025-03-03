@@ -59,6 +59,7 @@ export class sbiActor {
         await this.setMajorActions(Blocks.legendaryActions.id);
         await this.setMajorActions(Blocks.lairActions.id);
         await this.setMajorActions(Blocks.villainActions.id);
+        await this.setMajorActions(Blocks.mythicActions.id);
         await this.setMinorActions(Blocks.bonusActions.id);
         await this.setMinorActions(Blocks.reactions.id);
         await this.setGear();
@@ -213,6 +214,8 @@ export class sbiActor {
             isLairActionDescriptionOnly = !this[type].some(a => a.name !== "Description");
         } else if (isLegendaryTypeAction) {
             activationType = "legendary";
+        } else if (type === Blocks.mythicActions.id) {
+            activationType = "mythic";
         }
 
         // Create the items for each action.
