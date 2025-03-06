@@ -815,6 +815,8 @@ export class sbiActor {
     }
 
     setRacialDetails() {
+        if (!this.size) return;
+
         const getSizeAbbreviation = (size) => {
             switch (size) {
                 case "small":
