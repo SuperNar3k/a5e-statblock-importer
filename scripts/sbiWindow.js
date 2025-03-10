@@ -183,9 +183,13 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         const selectedFolderId = folderSelect.options[folderSelect.selectedIndex].value ?? undefined;
         const parseResult = sbiWindow.parse();
         if (parseResult?.actor) {
-            const actor5e = await parseResult.actor.createActor5e(selectedFolderId);
-            // Open the sheet.
-            actor5e.sheet.render(true);
+            try {
+                const actor5e = await parseResult.actor.createActor5e(selectedFolderId);
+                // Open the sheet.
+                actor5e.sheet.render(true);
+            } catch (error) {
+                sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", error);
+            }
         }
     }
 

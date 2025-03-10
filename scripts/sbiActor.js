@@ -972,18 +972,9 @@ export class sbiActor {
         const isInnate = ["innateSpellcasting", "utilitySpells"].includes(spellcastingType);
 
         const { featureName, spellcastingDetails, spellInfo } = this[spellcastingType];
-        const description = spellInfo[0].value.replace(new RegExp(`${featureName}\\s*(\\([^)]*\\))?\\.`, "ig"), "");
-
-        const spells = spellInfo.slice(1);
-
-        const spellObjs = spells.map(sg => sg.value).flat();
-
         const itemData = {};
         itemData.name = featureName;
         itemData.type = "feat";
-
-        const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
-        if (matchingImage) itemData.img = matchingImage;
 
         // Set spellcaster level
         if (spellcastingDetails.level) {
@@ -995,86 +986,96 @@ export class sbiActor {
             this.set5eProperty("system.attributes.spellcasting", sUtils.convertToShortAbility(spellcastingDetails.ability));
         }
 
-        // Add spells to actor.
-        const useActivities = game.settings.get(MODULE_NAME, "spellsAsActivities") && isInnate;
-        for (const spellObj of spellObjs) {
-            let castActivity = {_id: foundry.utils.randomID(), type: "cast"};
-            castActivity.name = spellObj.name; // This is not actually going to be saved (name is going to be derived from the spell itself), but we need it to compare later
+        if (spellInfo.length) {
+            const description = spellInfo[0].value.replace(new RegExp(`${featureName}\\s*(\\([^)]*\\))?\\.`, "ig"), "");
 
-            const spell = await this.fetchSpellByName(spellObj.name);
-            spellObj.uuid = spell.sourceUuid;
+            const spells = spellInfo.slice(1);
+            const spellObjs = spells.map(sg => sg.value).flat();
 
-            if (useActivities) {
-                castActivity.spell = {
-                    uuid: spell.sourceUuid,
-                    level: spellObj.level ?? spell.system.level,
-                    spellbook: false, // this will be updated after the actor is created
-                };
-            }
+            const matchingImage = await sUtils.getImgFromPackItemAsync(itemData.name.toLowerCase());
+            if (matchingImage) itemData.img = matchingImage;
 
-            if (spellObj.type === "slots") {
-                // Update the actor's number of slots per level.
-                this.set5eProperty(`system.spells.spell${spell.system.level}.value`, spellObj.count);
-                this.set5eProperty(`system.spells.spell${spell.system.level}.override`, spellObj.count);
-                if (!useActivities) {
+            // Add spells to actor.
+            const useActivities = game.settings.get(MODULE_NAME, "spellsAsActivities") && isInnate;
+            for (const spellObj of spellObjs) {
+                let castActivity = {_id: foundry.utils.randomID(), type: "cast"};
+                castActivity.name = spellObj.name; // This is not actually going to be saved (name is going to be derived from the spell itself), but we need it to compare later
+
+                const spell = await this.fetchSpellByName(spellObj.name);
+                spellObj.uuid = spell.sourceUuid;
+
+                if (useActivities) {
+                    castActivity.spell = {
+                        uuid: spell.sourceUuid,
+                        level: spellObj.level ?? spell.system.level,
+                        spellbook: false, // this will be updated after the actor is created
+                    };
+                }
+
+                if (spellObj.type === "slots") {
+                    // Update the actor's number of slots per level.
+                    this.set5eProperty(`system.spells.spell${spell.system.level}.value`, spellObj.count);
+                    this.set5eProperty(`system.spells.spell${spell.system.level}.override`, spellObj.count);
+                    if (!useActivities) {
+                        foundry.utils.setProperty(spell, "system.preparation.prepared", true);
+                    }
+                } else if (spellObj.type === "innate") {
+                    if (spellObj.count) {
+                        if (useActivities) {
+                            foundry.utils.setProperty(castActivity, "consumption.targets", [{
+                                type: "activityUses",
+                                value: 1
+                            }]);
+                            foundry.utils.setProperty(castActivity, "uses.max", "" + spellObj.count);
+                            foundry.utils.setProperty(castActivity, "uses.recovery", [{period: "day", type: "recoverAll"}]);
+                        } else {
+                            let mainSpellActivityId = Object.values(spell.system.activities)[0]._id;
+                            foundry.utils.setProperty(spell, `system.activities.${mainSpellActivityId}.consumption.targets`, [{
+                                type: "itemUses",
+                                value: 1
+                            }]);
+                            foundry.utils.setProperty(spell, "system.uses.max", "" + spellObj.count);
+                            foundry.utils.setProperty(spell, "system.uses.recovery", [{period: "day", type: "recoverAll"}]);
+                            foundry.utils.setProperty(spell, "system.preparation.mode", "innate");
+                        }
+                    } else {
+                        foundry.utils.setProperty(spell, "system.preparation.mode", "atwill");
+                    }
+                } else if (spellObj.type === "at will") {
+                    foundry.utils.setProperty(spell, "system.preparation.mode", "atwill");
+                } else if (spellObj.type === "cantrip") {
+                    // Don't need to set anything special because it should already be set on the spell we retrieved from the pack.
                     foundry.utils.setProperty(spell, "system.preparation.prepared", true);
                 }
-            } else if (spellObj.type === "innate") {
-                if (spellObj.count) {
-                    if (useActivities) {
-                        foundry.utils.setProperty(castActivity, "consumption.targets", [{
-                            type: "activityUses",
-                            value: 1
-                        }]);
-                        foundry.utils.setProperty(castActivity, "uses.max", "" + spellObj.count);
-                        foundry.utils.setProperty(castActivity, "uses.recovery", [{period: "day", type: "recoverAll"}]);
-                    } else {
-                        let mainSpellActivityId = Object.values(spell.system.activities)[0]._id;
-                        foundry.utils.setProperty(spell, `system.activities.${mainSpellActivityId}.consumption.targets`, [{
-                            type: "itemUses",
-                            value: 1
-                        }]);
-                        foundry.utils.setProperty(spell, "system.uses.max", "" + spellObj.count);
-                        foundry.utils.setProperty(spell, "system.uses.recovery", [{period: "day", type: "recoverAll"}]);
-                        foundry.utils.setProperty(spell, "system.preparation.mode", "innate");
+
+                if (useActivities) {
+                    // Add the spell to the spellcasting item's activities if it doesn't exist already.
+                    if (!Object.values(itemData.system?.activities || {}).find(a => a.name === spell.name)) {
+                        foundry.utils.setProperty(itemData, `system.activities.${castActivity._id}`, castActivity);
                     }
                 } else {
-                    foundry.utils.setProperty(spell, "system.preparation.mode", "atwill");
+                    // Add the spell to the character sheet if it doesn't exist already.
+                    if (!this.#dnd5e.items?.find(i => i.name === spell.name)) {
+                        this.addItem(spell);
+                    }
                 }
-            } else if (spellObj.type === "at will") {
-                foundry.utils.setProperty(spell, "system.preparation.mode", "atwill");
-            } else if (spellObj.type === "cantrip") {
-                // Don't need to set anything special because it should already be set on the spell we retrieved from the pack.
-                foundry.utils.setProperty(spell, "system.preparation.prepared", true);
             }
 
-            if (useActivities) {
-                // Add the spell to the spellcasting item's activities if it doesn't exist already.
-                if (!Object.values(itemData.system?.activities || {}).find(a => a.name === spell.name)) {
-                    foundry.utils.setProperty(itemData, `system.activities.${castActivity._id}`, castActivity);
+            const descriptionLines = [];
+            if (spells.length) {
+                descriptionLines.push(`<p>${description}</p>`);
+
+                // Put spell groups on their own lines in the description so that it reads better.
+                function getSpellDescription(spell) {
+                    const levelDescription = spell.level ? " (level " + spell.level + " version)" : "";
+                    return "<em>" + (spell.uuid ? "@UUID[" + spell.uuid + "]" : spell.name) + "</em>" + levelDescription;
                 }
-            } else {
-                // Add the spell to the character sheet if it doesn't exist already.
-                if (!this.#dnd5e.items?.find(i => i.name === spell.name)) {
-                    this.addItem(spell);
+                for (const spellGroup of spells) {
+                    descriptionLines.push(`<p><strong>${spellGroup.name}:</strong> ${spellGroup.value.map(getSpellDescription).join(", ")}</p>`);
                 }
             }
+            foundry.utils.setProperty(itemData, "system.description.value", sUtils.combineToString(descriptionLines));
         }
-
-        const descriptionLines = [];
-        if (spells.length) {
-            descriptionLines.push(`<p>${description}</p>`);
-
-            // Put spell groups on their own lines in the description so that it reads better.
-            function getSpellDescription(spell) {
-                const levelDescription = spell.level ? " (level " + spell.level + " version)" : "";
-                return "<em>" + (spell.uuid ? "@UUID[" + spell.uuid + "]" : spell.name) + "</em>" + levelDescription;
-            }
-            for (const spellGroup of spells) {
-                descriptionLines.push(`<p><strong>${spellGroup.name}:</strong> ${spellGroup.value.map(getSpellDescription).join(", ")}</p>`);
-            }
-        }
-        foundry.utils.setProperty(itemData, "system.description.value", sUtils.combineToString(descriptionLines));
 
         this.addItem(itemData);
     }
