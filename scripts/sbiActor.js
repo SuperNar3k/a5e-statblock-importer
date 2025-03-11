@@ -347,7 +347,7 @@ export class sbiActor {
             foundry.utils.setProperty(itemData, "system.type.value", "natural");
             foundry.utils.setProperty(itemData, `system.activities.${attackActivityId}`, {
                 _id: attackActivityId, type: "attack", activation: {type: "action", value: 1},
-                attack: {ability: sUtils.getAbilityMod(this.#dnd5e.system.abilities.str.value) > sUtils.getAbilityMod(this.#dnd5e.system.abilities.dex.value) ? "str" : "dex"}
+                attack: {ability: sUtils.getAbilityMod(this.#dnd5e.system.abilities.str?.value) > sUtils.getAbilityMod(this.#dnd5e.system.abilities.dex?.value) ? "str" : "dex"}
             });
 
             this.setReach(actionData, itemData);

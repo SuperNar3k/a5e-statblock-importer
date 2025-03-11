@@ -240,7 +240,7 @@ export class sbiParser {
             const abilityMatches = [...l.line.matchAll(sRegex.abilityNames)];
 
             if (abilityMatches.length) {
-                const names = abilityMatches.map(m => m[0]);
+                const names = abilityMatches.map(m => m[0].slice(0,3)); // This will also automatically transform Strength -> Str, in case the statblock used full ability names
                 foundAbilityNames.push.apply(foundAbilityNames, names);
             }
 
