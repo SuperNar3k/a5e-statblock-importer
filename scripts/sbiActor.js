@@ -14,6 +14,7 @@ export class sbiActor {
         this.alignment = null;                      // string
         this.bonusActions = [];                     // NameValueData[]
         this.challenge = null;                      // ChallengeData
+        this.damagesAndConditions = {}              // object
         this.features = [];                         // NameValueData[]
         this.gear = [];                             // NameValueData[]
         this.health = null;                         // RollData
@@ -22,6 +23,7 @@ export class sbiActor {
         this.lairActions = [];                      // NameValueData[]
         this.legendaryActions = [];                 // NameValueData[]
         this.mythicActions = [];                    // NameValueData[]
+        this.otherInfo = [];                        // string[]
         this.reactions = [];                        // NameValueData[]
         this.role = null;                           // string                    (MCDM)
         this.savingThrows = [];                     // string[]
@@ -37,7 +39,6 @@ export class sbiActor {
         this.type = null;                           // string
         this.utilitySpells = {};                    // {object, NameValueData[]} (MCDM)
         this.villainActions = [];                   // NameValueData[]           (MCDM)
-        this.damagesAndConditions = {}              // object
     }
 
     get spellcastingFeature() {
@@ -68,6 +69,7 @@ export class sbiActor {
         await this.setFeatures();
         this.setHealth();
         this.setLanguages();
+        this.setOtherInfo();
         this.setRacialDetails();
         this.setRole();
         this.setSavingThrows();
@@ -812,6 +814,18 @@ export class sbiActor {
         this.set5eProperty("system.traits.languages.value", knownValues);
         this.set5eProperty("system.traits.languages.custom", sUtils.capitalizeFirstLetter(unknownValues.join(";")));
         this.set5eProperty("system.traits.languages.communication.telepathy.value", telepathyValue);
+    }
+
+    setOtherInfo() {
+        if (!this.otherInfo.length) return;
+
+        let biography = this.otherInfo
+            .map(l => l.match(sRegex.otherBlock) ? `<h1>${l}</h1>` : l)
+            .join("<br>")
+            .replaceAll("<br><h1>", "<h1>")
+            .replaceAll("</h1><br>", "</h1>");
+
+        this.set5eProperty("system.details.biography.value", biography);
     }
 
     setRacialDetails() {

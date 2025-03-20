@@ -28,7 +28,8 @@ export const Blocks = {
     speed: {id: "speed", name: "Speed", top: true},
     traits: {id: "traits", name: "Traits"},
     utilitySpells: {id: "utilitySpells", name: "Utility Spells"},
-    villainActions: {id: "villainActions", name: "Villain Actions"}
+    villainActions: {id: "villainActions", name: "Villain Actions"},
+    otherBlock: {id: "otherBlock", name: "Other"}
 }
 
 export class DamageConditionId {

@@ -32,10 +32,14 @@ export class sbiRegex {
     static senses = /^senses( passive)?(.+\d+\s\bft\b)?/i;
     static skills = /^skills.+[\+-]\d+/i;
     static souls = /^souls[\s:]+\d+/i;
-    static speed = /^speed[\s:]+\d+\sft/i;
-    static traits = /^traits$/i;
+    static speed = /^speed[\s:]+\d+\s?ft/i;
+    static traits = /^(special\s)?traits$/i;
     static utilitySpells = /^utility spells$/i;
     static villainActions = /^villain actions$/i;
+
+    // Identify other unknown block titles that could be biographical info (e.g. About, Info, Biography, Combat Motivation, ...)
+    // Only used if all other blocks failed
+    static otherBlock = /^([A-Z][A-Za-z]+\s?){1,2}$/;
 
     // This identifies all the block starters that go to a new line instead of having the info in the same one.
     // This is a lot of repetition. While these rarely change, we might want a cleaner way to derive these.

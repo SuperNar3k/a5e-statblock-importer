@@ -29,7 +29,7 @@ export class sbiParser {
     }
 
     static getFirstMatch(line, excludeIds = []) {
-        return Object.keys(Blocks).filter(b => !["name", "features"].includes(b)).find(b => line.match(sRegex[b]) && !excludeIds.includes(b));
+        return Object.keys(Blocks).filter(b => !["name", "features", "otherBlock"].includes(b)).find(b => line.match(sRegex[b]) && !excludeIds.includes(b));
     }
 
     static parseInput(lines) {
@@ -79,6 +79,16 @@ export class sbiParser {
                     foundTopBlock = false;
                     lastBlockId = Blocks.features.id;
                     this.statBlocks.set(lastBlockId, []);
+                }
+
+                // Final fallback: if this still didn't match anything, check if it looks like a section title (max 3 words).
+                // These unknown blocks will be merged together and placed in the actor's biography.
+                if (!match && !foundAbilityLine && line.match(sRegex.otherBlock)) {
+                    foundTopBlock = false;
+                    lastBlockId = Blocks.otherBlock.id;
+                    if (!this.statBlocks.has(lastBlockId)) {
+                        this.statBlocks.set(lastBlockId, []);
+                    }
                 }
 
                 if (match) {
@@ -170,6 +180,9 @@ export class sbiParser {
                         break;
                     case Blocks.speed.id:
                         this.parseSpeed(blockData);
+                        break;
+                    case Blocks.otherBlock.id:
+                        this.parseOther(blockData);
                         break;
                     default:
                         // Ignore anything we don't recognize.
@@ -933,6 +946,10 @@ export class sbiParser {
         }
 
         return { spellcastingType, spellcastingDetails, spellInfo: spellGroups };
+    }
+
+    static parseOther(lines) {
+        this.actor.otherInfo = lines.map(l => l.line);
     }
 
 }
