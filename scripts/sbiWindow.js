@@ -295,10 +295,13 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
                 c.addEventListener("drop", (evt) => {
                     evt.preventDefault();
                     const lineNumber = evt.dataTransfer.getData("text/plain");
-                    const blockId = evt.target.closest(".block-container").getAttribute("data-block-id")
-                    input.querySelector(`.line-container[data-line="${lineNumber}"]`).setAttribute("data-hint", blockId);
-                    if (document.getElementById("sbi-import-autoparse").checked) {
-                        sbiWindow.parse();
+                    const originalBlockId = input.querySelector(`.line-container[data-line="${lineNumber}"]`).getAttribute("data-block-id");
+                    const blockId = evt.target.closest(".block-container").getAttribute("data-block-id");
+                    if (blockId !== originalBlockId) {
+                        input.querySelector(`.line-container[data-line="${lineNumber}"]`).setAttribute("data-hint", blockId);
+                        if (document.getElementById("sbi-import-autoparse").checked) {
+                            sbiWindow.parse();
+                        }
                     }
                 });
             });
