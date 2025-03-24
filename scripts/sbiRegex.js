@@ -5,7 +5,7 @@ export class sbiRegex {
     static armor = /^((armor|armour) class|ac)[\s:]+\d+/i;
     static actions = /^actions$/i;
     static abilitiesBase = String.raw`\bstr\b|\bstrength\b|\bdex\b|\bdexterity\b|\bcon\b|\bconstitution\b|\bint\b|\bintelligence\b|\bwis\b|\bwisdom\b|\bcha\b|\bcharisma\b`;
-    static abilities = new RegExp(String.raw`^(${this.abilitiesBase}|\bMod\s+Save\b)`, "i");
+    static abilities = new RegExp(String.raw`^(${this.abilitiesBase}|\bmod(\s+save\b)?)`, "i");
     static bonusActions = /^bonus actions$/i;
     static challenge = /^(challenge|\bcr\b|challenge rating)[\s:]+\d+/i;
     static conditionImmunities = /^condition\simmunities[\s:]+/i;
@@ -80,7 +80,7 @@ export class sbiRegex {
     static villainActionTitle = /(^|[.!]\s*\n)(?<title>Action\s[123]:\s.+[.!?])/dg;
     // The rest of these are utility regexes to pull out specific data.
     static abilityNames = new RegExp(String.raw`(?<abilityName>${this.abilitiesBase})`, "idg");
-    static abilityValues = /(?<base>\d+)\s?\((?<modifier>[\+\-−–]?\d+)\)/dg;
+    static abilityValues = /(?<base>\d+)\s?(?:\((?<modifier>[\+\-−–]?\d+)\))?/dg;
     static abilitySaves = /(?<name>\bstr\b|\bdex\b|\bcon\b|\bint\b|\bwis\b|\bcha\b) (?<modifier>[\+|-]\d+)/ig;
     static abilityValues24 = /(?<base>\d+)\s?(?<modifier>[\+\-−–]?\d+)\s?(?<saveModifier>[\+\-−–]?\d+)/dg;
     static actionCost = /\((costs )?(?<cost>\d+) action(s)?\)/idg;

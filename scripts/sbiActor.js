@@ -768,21 +768,22 @@ export class sbiActor {
         actorData.type = "npc";
         
         const actor5e = await CONFIG.Actor.documentClass.create(actorData);
-        
-        await this.setSkills(actor5e);
+        if (actor5e) {
+            await this.setSkills(actor5e);
 
-        // Check if AC needs fixed (if mage armor, skip check)
-        if (!this.armor.types.includes("mage") && this.armor.ac !== actor5e.system.attributes.ac.value) {
-            actor5e.update({
-                "system.attributes.ac.calc": "flat",
-                "system.attributes.ac.flat": this.armor.ac
-            });
-        }
+            // Check if AC needs fixed (if mage armor, skip check)
+            if (!this.armor.types.includes("mage") && this.armor.ac !== actor5e.system.attributes.ac.value) {
+                actor5e.update({
+                    "system.attributes.ac.calc": "flat",
+                    "system.attributes.ac.flat": this.armor.ac
+                });
+            }
 
-        // Update cast activities to have the spells shown in the spellbook
-        for (const item of actor5e.items) {
-            for (const castActivity of item.system.activities.filter(a => a.type === "cast")) {
-                await castActivity.update({"spell.spellbook": true});
+            // Update cast activities to have the spells shown in the spellbook
+            for (const item of actor5e.items) {
+                for (const castActivity of item.system.activities.filter(a => a.type === "cast")) {
+                    await castActivity.update({"spell.spellbook": true});
+                }
             }
         }
 

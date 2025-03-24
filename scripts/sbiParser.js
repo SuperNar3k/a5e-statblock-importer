@@ -257,23 +257,27 @@ export class sbiParser {
                 foundAbilityNames.push.apply(foundAbilityNames, names);
             }
 
-            // Look for ability values, like 18 (+4).
-            const valueMatches = this.matchAndAnnotate(l, sRegex.abilityValues);
-
-            if (valueMatches.length) {
-                const values = valueMatches.map(m => m.groups.base);
-                foundAbilityValues.push.apply(foundAbilityValues, values);
-            }
-
             // Look for ability and save values (2024 format), like 18 +4 +6
             const valueMatches24 = this.matchAndAnnotate(l, sRegex.abilityValues24);
-
+            
             if (valueMatches24.length) {
+
                 const values = valueMatches24.map(m => m.groups.base);
                 foundAbilityValues.push.apply(foundAbilityValues, values);
                 // The 2024 format includes saving throws proficiencies here. We just check if the modifier is the same or not.
                 savingThrows24Data.push.apply(savingThrows24Data, valueMatches24.map(m => m.groups.modifier !== m.groups.saveModifier));
-            }
+                
+            } else {
+
+                // Look for ability values, like 18 (+4).
+                const valueMatches = this.matchAndAnnotate(l, sRegex.abilityValues);
+
+                if (valueMatches.length) {
+                    const values = valueMatches.map(m => m.groups.base);
+                    foundAbilityValues.push.apply(foundAbilityValues, values);
+                }
+
+            } 
 
         }
 
