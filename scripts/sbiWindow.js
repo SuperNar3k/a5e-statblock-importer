@@ -10,6 +10,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
     constructor(options) {
         super(options);
         this.keyupParseTimeout = null;
+        this.pauseAutoParse = false;
     }
 
     static DEFAULT_OPTIONS = {
@@ -43,7 +44,23 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         const input = document.getElementById("sbi-input");
 
         input.addEventListener("keydown", e => {
-            [...this.element.querySelectorAll("#sbi-input span.block-header")].forEach(s => s.remove());
+            const selectionRange = sbiUtils.getSelectionRange(input);
+
+            input.querySelectorAll(".line-container > span").forEach(l => {
+                const hint = l.closest(".line-container").getAttribute("data-hint");
+                if (hint) {
+                    l.setAttribute("data-hint", hint);
+                }
+                if (!l.classList.contains("hint")) {
+                    input.appendChild(l);
+                    input.innerHTML += "\n";
+                }
+            });
+            input.querySelectorAll(".block-container").forEach(b => {
+                input.removeChild(b);
+            });
+
+            sbiUtils.setSelectionRange(input, selectionRange);
             
             //override pressing enter in contenteditable
             if (e.key == "Enter") {
@@ -51,9 +68,9 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
                 e.preventDefault();
                 e.stopPropagation();
                 //insert newline
-                sbiWindow.insertTextAtSelection("\n");
+                sbiUtils.insertTextAtSelection("\n");
             }
-            input.dispatchEvent(new Event('input'));
+            input.dispatchEvent(new Event("input"));
         });
 
         input.addEventListener("paste", e => {
@@ -64,7 +81,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
             //remove unicode format control characters
             text = text.replace(/\p{Cf}/gu, "");
             //insert text manually
-            sbiWindow.insertTextAtSelection(text);
+            sbiUtils.insertTextAtSelection(text);
         });
 
         const folderSelect = document.getElementById("sbi-import-select");
@@ -83,7 +100,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
         ["blur", "input", "paste"].forEach(eventType => {
             input.addEventListener(eventType, (e) => {
-                if (document.getElementById("sbi-import-autoparse").checked) {
+                if (document.getElementById("sbi-import-autoparse").checked && !this.pauseAutoParse) {
                     if (this.keyupParseTimeout) clearTimeout(this.keyupParseTimeout);
                     this.keyupParseTimeout = setTimeout(sbiWindow.parse, e.type == "input" ? 1000 : 0);
                 }
@@ -93,15 +110,71 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         sbiUtils.log("Listeners activated");
     }
 
+    static getBlockSelectInputGroup(selected) {        
+        const fields = foundry.applications.fields;
+
+        const blockSelect = fields.createSelectInput({
+            name: "hint",
+            options: Object.values(Blocks),
+            blank: "None",
+            valueAttr: "id",
+            labelAttr: "name",
+            localize: false,
+            value: selected
+        });
+        const blockGroup = fields.createFormGroup({
+            input: blockSelect,
+            label: "Hint Block",
+            hint: "Select the block that this line should belong to."
+        });
+        const content = blockGroup.outerHTML;
+        return content;
+    }
+
+    static hintDialog(lineElement) {
+        sbiWindow.sbiInputWindowInstance.pauseAutoParse = true;
+
+        const lineText = lineElement.innerText;
+        const content = `<q class="line-text">${lineText}</q>` + sbiWindow.getBlockSelectInputGroup(lineElement.getAttribute("data-hint"));
+
+        foundry.applications.api.DialogV2.prompt({
+            window: { title: "Line Hint" },
+            position: { width: 400 },
+            classes: ["sbi-dialog"],
+            modal: true,
+            rejectClose: false,
+            content,
+            ok: {
+                callback: (event, button, dialog) => new FormDataExtended(button.form).object
+            }
+        }).then(hint => {
+            if (hint) {
+                hint = hint.hint;
+                sbiWindow.sbiInputWindowInstance.pauseAutoParse = false;
+                if (!hint) {
+                    lineElement.removeAttribute("data-hint");
+                    lineElement.querySelector(".hint").remove?.();
+                } else {
+                    lineElement.setAttribute("data-hint", hint);
+                    lineElement.querySelector(".hint")?.setAttribute("data-block-id", hint);
+                    lineElement.querySelector(".hint")?.setAttribute("data-block-name", Blocks[hint].name);
+                }
+                sbiWindow.parse();
+            }
+        });
+    }
+
     static parse() {
         const input = document.getElementById("sbi-input");
 
-        if (input.innerText.trim().length == 0) return;
+        if (!input.innerText.trim().length) return;
+
+        const hints = [...input.querySelectorAll("[data-hint]")].map(l => ({text: l.innerText, blockId: l.getAttribute("data-hint")}));
 
         const lines = sbiParser.fixNewLines(sbiUtils.stripMarkdownAndCleanInput(input.innerText)).split("\n");
 
         try {
-            const { actor, statBlocks, unknownLines } = sbiParser.parseInput(lines);
+            const { actor, statBlocks, unknownLines } = sbiParser.parseInput(lines, hints);
 
             if (!statBlocks.size) {
                 sbiUtils.error("Unable to parse statblock");
@@ -114,12 +187,12 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
             sbiUtils.log("Parsing completed", statBlocks, actor);
             
-            // Each line will be its own span, with data attributes indicating their block
-            let spanLines = lines.map((line, i) => {
+            // Each line will be its own div, with data attributes indicating their block
+            let divLines = lines.map((line, i) => {
                 const block = [...statBlocks.entries()].find(e => e[1].some(l => l.lineNumber == i))?.[0];
                 const spanLine = document.createElement("span");
-                spanLine.setAttribute("data-line", i);
-                spanLine.setAttribute("data-block", block);
+
+                const hint = statBlocks.get(block)?.find(l => l.lineNumber == i).hint;
 
                 // If the line has matched data, we also surround each matched part with a span
                 const matchData = statBlocks.get(block)?.find(l => l.lineNumber == i).matchData || [];
@@ -152,22 +225,84 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
                 }
                 
                 spanLine.innerHTML = line;
-                return spanLine;
+
+                const divLine = document.createElement("div");
+                divLine.classList.add("line-container");
+                divLine.setAttribute("data-line", i);
+                divLine.setAttribute("data-block-id", block);
+                divLine.setAttribute("draggable", true);
+                divLine.appendChild(spanLine);
+                divLine.addEventListener("contextmenu", (evt) => {
+                    sbiWindow.hintDialog(evt.target.closest(".line-container"));
+                });
+
+                if (hint) {
+                    divLine.setAttribute("data-hint", hint);
+                    const hintSpan = document.createElement("span");
+                    hintSpan.classList.add("hint");
+                    hintSpan.setAttribute("data-block-id", hint);
+                    hintSpan.setAttribute("data-block-name", Blocks[hint].name);
+                    hintSpan.addEventListener("click", (evt) => {
+                        sbiWindow.hintDialog(evt.target.closest("[data-hint]"));
+                    });
+                    divLine.appendChild(hintSpan);
+                }
+
+                return divLine;
             });
 
             // Insert the span lines, with headers for each block
             const scrollTop = input.scrollTop;
-            input.innerHTML = `<span class="block-header" data-block="Name" contenteditable="false" readonly></span>`;
-            input.innerHTML += `<span data-line="-1" data-block="name">` + actor.name + "</span>\n";
+
+            const nameSpanLine = `<span>${actor.name}</span>`;
+            input.innerHTML = `<div class="block-container" data-block-id="name" data-block-name="Name"><div class="line-container" data-line="-1" data-block-id="name">${nameSpanLine}</div></div>`;
+
             let previousBlock = "";
-            spanLines.forEach(l => {
-                if (l.getAttribute("data-block") != previousBlock) {
-                    input.innerHTML += `<span class="block-header" data-block="${Blocks[l.getAttribute("data-block")]?.name || "???"}" contenteditable="false" readonly></span>`
-                    previousBlock = l.getAttribute("data-block");
+            let blockContainer;
+            divLines.forEach(l => {
+                if (l.getAttribute("data-block-id") != previousBlock) {
+                    if (blockContainer) {
+                        input.appendChild(blockContainer);
+                    }
+                    blockContainer = document.createElement("div");
+                    blockContainer.classList.add("block-container");
+                    blockContainer.setAttribute("data-block-id", l.getAttribute("data-block-id"));
+                    blockContainer.setAttribute("data-block-name", Blocks[l.getAttribute("data-block-id")]?.name || "???");
+                    previousBlock = l.getAttribute("data-block-id");
                 }
-                input.appendChild(l);
-                input.innerHTML += "\n";
+                blockContainer.appendChild(l);
             });
+            input.appendChild(blockContainer);
+
+            input.querySelectorAll(".line-container").forEach(c => {
+                c.addEventListener("dragstart", (evt) => {
+                    const lineNumber = evt.target.getAttribute("data-line");
+                    evt.dataTransfer.setData("text/plain", lineNumber);
+                    evt.dataTransfer.effectAllowed = "move";
+                });
+                c.addEventListener("dragend", (evt) => {
+                    blockContainers.forEach(c => { c.classList.remove("drag-over"); });
+                });
+            });
+            const blockContainers = input.querySelectorAll(".block-container");
+            blockContainers.forEach(c => {
+                c.addEventListener("dragover", (evt) => {
+                    evt.preventDefault();
+                    evt.dataTransfer.dropEffect = "move";
+                    blockContainers.forEach(c => { c.classList.remove("drag-over"); });
+                    evt.target.closest(".block-container").classList.add("drag-over");
+                });
+                c.addEventListener("drop", (evt) => {
+                    evt.preventDefault();
+                    const lineNumber = evt.dataTransfer.getData("text/plain");
+                    const blockId = evt.target.closest(".block-container").getAttribute("data-block-id")
+                    input.querySelector(`.line-container[data-line="${lineNumber}"]`).setAttribute("data-hint", blockId);
+                    if (document.getElementById("sbi-import-autoparse").checked) {
+                        sbiWindow.parse();
+                    }
+                });
+            });
+
             input.scrollTop = scrollTop;
 
             return { actor, statBlocks };
@@ -193,13 +328,4 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         }
     }
 
-    static insertTextAtSelection(txt) {
-        const selectedRange = window.getSelection()?.getRangeAt(0);
-        if (!selectedRange || !txt) {
-            return;
-        }
-        selectedRange.deleteContents();
-        selectedRange.insertNode(document.createTextNode(txt));
-        selectedRange.setStart(selectedRange.endContainer, selectedRange.endOffset);
-    }
 }

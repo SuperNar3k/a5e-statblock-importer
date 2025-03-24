@@ -6,7 +6,7 @@ export const Blocks = {
     challenge: {id: "challenge", name: "Challenge", top: true},
     conditionImmunities: {id: "conditionImmunities", name: "Condition Immunities", top: true},
     damageImmunities: {id: "damageImmunities", name: "Damage Immunities", top: true},
-    immunities2024: {id: "immunities2024", name: "Immunities", top: true},
+    immunities2024: {id: "immunities2024", name: "Immunities (2024)", top: true},
     damageResistances: {id: "damageResistances", name: "Damage Resistances", top: true},
     damageVulnerabilities: {id: "damageVulnerabilities", name: "Damage Vulnerabilities", top: true},
     features: {id: "features", name: "Features"},
@@ -29,7 +29,7 @@ export const Blocks = {
     traits: {id: "traits", name: "Traits"},
     utilitySpells: {id: "utilitySpells", name: "Utility Spells"},
     villainActions: {id: "villainActions", name: "Villain Actions"},
-    otherBlock: {id: "otherBlock", name: "Other"}
+    otherBlock: {id: "otherBlock", name: "Other (Bio)"}
 }
 
 export class DamageConditionId {

@@ -32,7 +32,7 @@ export class sbiParser {
         return Object.keys(Blocks).filter(b => !["name", "features", "otherBlock"].includes(b)).find(b => line.match(sRegex[b]) && !excludeIds.includes(b));
     }
 
-    static parseInput(lines) {
+    static parseInput(lines, hints = []) {
         if (lines.length) {
 
             // Assume the first line is the name.
@@ -67,8 +67,15 @@ export class sbiParser {
                     continue;
                 }
 
-                // Get the first block match, excluding the ones we already have
-                const match = this.getFirstMatch(line, [...this.statBlocks.keys()]);
+                let match;
+
+                const hint = hints.find(h => h.text.trim() === line);
+                if (hint) {
+                    match = hint.blockId;
+                } else {
+                    // Get the first block match, excluding the ones we already have
+                    match = this.getFirstMatch(line, [...this.statBlocks.keys()]);
+                }
 
                 // This check is a little shaky, but it's the best we can do. We assume that if
                 // we've been going through the top blocks and hit a line that doesn't match anything
@@ -105,14 +112,16 @@ export class sbiParser {
                 // abilities after we've found the first one.
                 if (match && !foundAbilityLine) {
                     lastBlockId = match;
-                    this.statBlocks.set(lastBlockId, []);
+                    if (!hint || !this.statBlocks.has(lastBlockId)) { // If this line block was hinted, it could go to an existing block
+                        this.statBlocks.set(lastBlockId, []);
+                    }
 
                     // Set 'foundAbilityLine' to true when we've found the first ability.
                     foundAbilityLine = lastBlockId === Blocks.abilities.id;
                 }
 
                 if (this.statBlocks.has(lastBlockId)) {
-                    this.statBlocks.get(lastBlockId).push({lineNumber: i, line});
+                    this.statBlocks.get(lastBlockId).push({lineNumber: i, line, ...(hint && {hint: hint.blockId})});
                 }
             }
 

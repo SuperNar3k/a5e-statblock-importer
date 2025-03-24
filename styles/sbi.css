@@ -45,30 +45,57 @@
     padding: 4px 8px;
     white-space: pre-wrap;
     flex: 1;
+    position: relative;
 }
 
-#sbi-input:empty:before {
+#sbi-input:empty::before {
     content: attr(data-placeholder);
     color: gray;
 }
 
-#sbi-input span {
+#sbi-input .block-container {
     position: relative;
+    border-top: 1px solid rgba(128, 128, 128, 0.5);
+    padding: 8px 0;
 }
 
-#sbi-input span.block-header {
+#sbi-input .block-container::before {
+    content: attr(data-block-name);
+    position: absolute;
     font-size: smaller;
     font-weight: bold;
-    border-top: 1px solid gray;
-    margin: 8px 0;
     opacity: 0.5;
-    display: block;
+    right: 0;
+    text-align: right;
 }
 
-#sbi-input span.block-header:before {
-    content: attr(data-block);
-    position: absolute;
-    right: 0;
+#sbi-input .block-container.drag-over {
+    background-color: #aaa;
+}
+
+#sbi-input .line-container {
+    cursor: grab;
+}
+
+#sbi-input .line-container:hover {
+    background-color: #aaa;
+}
+
+#sbi-input span.hint::before {
+    content: 'Hint: ' attr(data-block-name);
+    font-size: smaller;
+    font-weight: bold;
+    opacity: 0.5;
+    margin: 8px;
+    border: 1px solid grey;
+    border-radius: 4px;
+    padding: 0 4px;
+    cursor: pointer;
+}
+
+#sbi-input span {
+    position: relative;
+    cursor: text;
 }
 
 #sbi-input span span.matched {
@@ -117,4 +144,9 @@
 
 #sbi-compendium-options-menu .form-group label:hover {
     cursor: move;
+}
+
+.sbi-dialog .line-text {
+    display: block;
+    font-style: italic;
 }

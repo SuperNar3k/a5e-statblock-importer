@@ -353,4 +353,103 @@ export class sbiUtils {
     static except(sourceArr, targetArr) {
         return sourceArr.filter(item => targetArr.indexOf(item) === -1);
     };
+
+    // =======================
+    // ContentEditable Helpers
+    // =======================
+
+    static textNodesUnder(node) {
+        const all = [];
+        for (node = node.firstChild; node; node = node.nextSibling) {
+            if (node.nodeType === 3) {
+                all.push(node);
+            } else {
+                all.push(...this.textNodesUnder(node));
+            }
+        }
+        return all;
+    }
+
+    static getCaretPositionFromOffsetInfo(contentEditable, offsetInfo = {}) {
+        let index = 0;
+        let currentLine = -1;
+
+        if (offsetInfo.node === contentEditable && offsetInfo.offset === 0) {
+            return 0;
+        }
+
+        const textNodes = this.textNodesUnder(contentEditable);
+    
+        for (let i=0; i<textNodes.length; i++) {
+            const node = textNodes[i];
+            const nodeLine = node.parentNode.closest(".line-container")?.getAttribute("data-line");
+            if (nodeLine && parseInt(nodeLine) !== currentLine) {
+                index++;
+                currentLine = parseInt(nodeLine);
+            }
+            const isSelectedNode = node === offsetInfo.node;
+    
+            if (isSelectedNode) {
+                index += offsetInfo.offset;
+                break;
+            } else {
+                index += node.textContent.length;
+            }
+        }
+    
+        return index;
+    }
+
+    static getSelectionRange(contentEditable) {
+        const selection = window.getSelection();
+        return {
+            start: this.getCaretPositionFromOffsetInfo(contentEditable, {node: selection.anchorNode, offset: selection.anchorOffset}),
+            end: this.getCaretPositionFromOffsetInfo(contentEditable, {node: selection.focusNode, offset: selection.focusOffset})
+        };
+    }
+
+    static getOffsetInfoFromCaretPosition(contentEditable, position) {
+        let cumulativeIndex = 0;
+        let relativeIndex = 0;
+        let targetNode = null;
+    
+        const textNodes = this.textNodesUnder(contentEditable);
+    
+        for (let i=0; i<textNodes.length; i++) {
+            const node = textNodes[i];
+            
+            if (position <= cumulativeIndex + node.textContent.length) {
+                targetNode = node;
+                relativeIndex = position - cumulativeIndex;
+                break;
+            }
+    
+            cumulativeIndex += node.textContent.length;
+        }
+
+        return {node: targetNode || contentEditable, offset: relativeIndex};
+    }
+
+    static setSelectionRange(contentEditable, rangeInfo) {
+        const anchorInfo = this.getOffsetInfoFromCaretPosition(contentEditable, rangeInfo.start);
+        const focusInfo = this.getOffsetInfoFromCaretPosition(contentEditable, rangeInfo.end);
+
+        const range = window.document.createRange();
+        range.setStart(anchorInfo.node, anchorInfo.offset);
+        range.setEnd(focusInfo.node, focusInfo.offset);
+    
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
+
+    static insertTextAtSelection(txt) {
+        const selectedRange = window.getSelection()?.getRangeAt(0);
+        if (!selectedRange || !txt) {
+            return;
+        }
+        selectedRange.deleteContents();
+        selectedRange.insertNode(document.createTextNode(txt));
+        selectedRange.setStart(selectedRange.endContainer, selectedRange.endOffset);
+    }
 }
