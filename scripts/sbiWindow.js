@@ -171,10 +171,8 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
         const hints = [...input.querySelectorAll("[data-hint]")].map(l => ({text: l.innerText, blockId: l.getAttribute("data-hint")}));
 
-        const lines = sbiParser.fixNewLines(sbiUtils.stripMarkdownAndCleanInput(input.innerText)).split("\n");
-
         try {
-            const { actor, statBlocks, unknownLines } = sbiParser.parseInput(lines, hints);
+            const { actor, statBlocks, unknownLines, lines } = sbiParser.parseInput(input.innerText, hints);
 
             if (!statBlocks.size) {
                 sbiUtils.error("Unable to parse statblock");

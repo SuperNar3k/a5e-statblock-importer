@@ -32,7 +32,9 @@ export class sbiParser {
         return Object.keys(Blocks).filter(b => !["name", "features", "otherBlock"].includes(b)).find(b => line.match(sRegex[b]) && !excludeIds.includes(b));
     }
 
-    static parseInput(lines, hints = []) {
+    static parseInput(text, hints = []) {
+        const lines = sbiParser.fixNewLines(sUtils.stripMarkdownAndCleanInput(text)).split("\n");
+
         if (lines.length) {
 
             // Assume the first line is the name.
@@ -199,7 +201,7 @@ export class sbiParser {
                 }
             }
 
-            return { actor: this.actor, statBlocks: this.statBlocks, unknownLines };
+            return { actor: this.actor, statBlocks: this.statBlocks, unknownLines, lines };
         }
     }
 

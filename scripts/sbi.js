@@ -1,8 +1,20 @@
+import { MODULE_NAME } from "./sbiConfig.js";
 import { registerSettings } from "./sbiConfig.js";
 import { sbiUtils } from "./sbiUtils.js";
 import { sbiWindow } from "./sbiWindow.js";
+import { sbiParser } from "./sbiParser.js";
 
-Hooks.on("init", registerSettings);
+Hooks.on("init", () => {
+    registerSettings();
+    const parse = sbiParser.parseInput.bind(sbiParser);
+
+    game.modules.get(MODULE_NAME).api = {
+        parse,
+        import: async (text, folderId) => {
+            return await parse(text).actor?.createActor5e(folderId);
+        }
+    };
+});
 
 Hooks.on("renderActorDirectory", (app, html, data) => {
     if (game.user.hasPermission("ACTOR_CREATE")) {
