@@ -68,6 +68,44 @@ each of which can grapple only one target.
 Fist. Melee Weapon Attack: +9 to hit, reach 5 ft., one
 target. Hit: 7 (2d4 + 2) bludgeoning damage.
 ```
+
+## API
+The module exposes an API with two functions: `parse()` and `import()`. Here's two simple examples:
+
+```js
+// Parse and then import
+
+const sbiApi = game.modules.get("5e-statblock-importer").api;
+const glabrezu = String.raw // Not including the full text here, but you get the idea
+    `Glabrezu
+    Large fiend (demon), chaotic evil
+    ...
+    target. Hit: 7 (2d4 + 2) bludgeoning damage.`;
+const parsedGlabrezu = sbiApi.parse(glabrezu);
+console.log(parsedGlabrezu);
+
+// the result object has the following properties:
+//      actor: an object representation of all the parsed information for this creature
+//      statBlocks: a Map with all the different sections of the statblock and the text lines assigned to them
+//      lines: an array containing the provided lines of text
+//      unknownLines: an array containing any line that was not assigned to a block.
+
+const myFolder = game.folders.getName("My Folder").id;
+const glabrezuActor5e = await parsedGlabrezu.actor.createActor5e(myFolder.id);
+```
+```js
+// Direct import
+
+const sbiApi = game.modules.get("5e-statblock-importer").api;
+const glabrezu = String.raw
+    `Glabrezu
+    Large fiend (demon), chaotic evil
+    ...
+    target. Hit: 7 (2d4 + 2) bludgeoning damage.`;
+const myFolder = game.folders.getName("My Folder").id;
+const glabrezuActor5e = await sbiApi.import(glabrezu, myFolder.id);
+```
+
 ## Issues
 If you find a statblock that doesn't import correctly, open an issue [here](https://github.com/Aioros/5e-statblock-importer/issues) and include the text that you were trying to use.
 
