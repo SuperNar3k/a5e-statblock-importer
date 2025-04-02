@@ -531,7 +531,7 @@ export class sbiParser {
         const telepathy = matches.find(m => m.groups?.telepathyRange)?.groups.telepathyRange;
         
         const unknownLanguages = sUtils.combineToString(lines.map(l => l.line))
-            .replace(/^languages\s*/i, "")
+            .replace(/^languages[.:]?\s*/i, "")
             .replaceAll(regex, "")
             .replaceAll(/(,\s)+/g, ";")
             .replaceAll(/,,+/g, ";")
@@ -846,10 +846,11 @@ export class sbiParser {
                 notSpellLines.push(l);
             }
 
-            // Check to see if we've reached the end of the spell block by seeing if 
-            // the next line is a title.
+            // Check to see if we've reached the end of the spell block
+            // by seeing if the next line is a title.
             const nextLineIsTitle = index < validLines.length - 1
-                && validLines[index + 1].line.match(sRegex.blockTitle);
+                && validLines[index + 1].line.match(sRegex.blockTitle)
+                && !validLines[index + 1].line.match(sRegex.spellGroup);
 
             if (foundSpellBlock && nextLineIsTitle) {
                 // Add a period at the end so that blocks are extracted correctly.
@@ -862,11 +863,12 @@ export class sbiParser {
             }
         }
 
-        const actionsLines = notSpellLines.concat(spellLines);
+        const actionsLines = [...notSpellLines, ...spellLines];
+        const titleMatchesLines = [...notSpellLines, ...spellLines.slice(0, 1)];
         
-        let titleMatches = this.matchAndAnnotate(actionsLines, sRegex.blockTitle);
+        let titleMatches = this.matchAndAnnotate(titleMatchesLines, sRegex.blockTitle);
         if (!titleMatches.length) {
-            titleMatches = this.matchAndAnnotate(actionsLines, sRegex.villainActionTitle);
+            titleMatches = this.matchAndAnnotate(titleMatchesLines, sRegex.villainActionTitle);
         }
 
         let i = -1;

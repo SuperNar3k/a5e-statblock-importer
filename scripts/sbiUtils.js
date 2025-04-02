@@ -317,7 +317,7 @@ export class sbiUtils {
         let combined = this.combineToString(lines.map(l => l.line))
             .replace("\n", " ");
         if (removeName) {
-            combined = combined.replace(/^[^.]*\.\s*/i, "");
+            combined = combined.replace(/^[^.:!]*[.:!]\s*/i, "");
         }
         return combined;
     }
