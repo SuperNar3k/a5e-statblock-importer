@@ -11,7 +11,7 @@ Hooks.on("init", () => {
     game.modules.get(MODULE_NAME).api = {
         parse,
         import: async (text, folderId) => {
-            return await parse(text).actor?.createActor5e(folderId);
+            return await parse(text).actor?.createActor5e(folderId, false);
         }
     };
 });

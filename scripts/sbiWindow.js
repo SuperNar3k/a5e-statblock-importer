@@ -180,10 +180,10 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
             }
 
             if (unknownLines.length) {
-                sbiUtils.warn("Found unaccounted for lines", unknownLines);
+                sbiUtils.warn("Found unaccounted for lines", true, unknownLines);
             }
 
-            sbiUtils.log("Parsing completed", statBlocks, actor);
+            sbiUtils.log("Parsing completed", true, statBlocks, actor);
             
             // Each line will be its own div, with data attributes indicating their block
             let divLines = lines.map((line, i) => {
@@ -309,7 +309,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
             return { actor, statBlocks };
             
         } catch (error) {
-            sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", error);
+            sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", true, error);
         }
     }
 
@@ -324,7 +324,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
                 // Open the sheet.
                 actor5e.sheet.render(true);
             } catch (error) {
-                sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", error);
+                sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", true, error);
             }
         }
     }

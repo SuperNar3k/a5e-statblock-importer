@@ -6,6 +6,8 @@ import { sbiRegex as sRegex} from "./sbiRegex.js";
 export class sbiActor {
     #dnd5e = {};
 
+    #canUseUi = true;
+
     constructor(name) {
         this.name = name;                           // string
         this.actions = [];                          // NameValueData[]
@@ -733,7 +735,7 @@ export class sbiActor {
             this.set5eProperty("system.details.cr", sUtils.getMinLevel(this.challenge.pb));
         } else {
             this.set5eProperty("system.details.cr", 0);
-            sUtils.warn("Could not find CR information. Some calculated attack information could be wrong.");
+            sUtils.warn("Could not find CR information. Some calculated attack information could be wrong.", this.#canUseUi);
         }
     }
 
@@ -759,7 +761,9 @@ export class sbiActor {
         }
     }
 
-    async createActor5e(selectedFolderId) {
+    async createActor5e(selectedFolderId, withUi = true) {
+        this.#canUseUi = withUi;
+
         await this.updateActorData();
 
         const actorData = foundry.utils.deepClone(this.#dnd5e);
@@ -976,10 +980,10 @@ export class sbiActor {
             }
         }
         if (this.missingSpells.length) {
-            sUtils.warn("Some spells could not be found in your compendiums and have been created as placeholders: " + this.missingSpells.join(", "));
+            sUtils.warn("Some spells could not be found in your compendiums and have been created as placeholders: " + this.missingSpells.join(", "), this.#canUseUi);
         }
         if (this.obsoleteSpells.length) {
-            sUtils.warn("Some spells have been imported from 2014 sources while you are playing with 2024 rules, review your Compendium Options: " + this.obsoleteSpells.join(", "));
+            sUtils.warn("Some spells have been imported from 2014 sources while you are playing with 2024 rules, review your Compendium Options: " + this.obsoleteSpells.join(", "), this.#canUseUi);
         }
     }
 
