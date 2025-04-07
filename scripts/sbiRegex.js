@@ -124,7 +124,6 @@ export class sbiRegex {
     // Regexes for description enrichment
     static makesAttack1 = String.raw`with\sa\suse\sof\s(?:.*\sor\s(?:\(\w\)\s)?)?(?<attack1>(?:[^,.:;(\s]+\s?){1,4})(?:[,.:;]|\sto cast)`;
     static makesAttack2 = String.raw`makes?\s\w+\s(?<attack2>(?:[^,.:;\s]+\s?){1,4})\sattacks?(?:\sand\s\w+\s(?<attack3>(?:[^,.:;\s]+\s?){1,4})\sattacks?)?(?:\sand\suses\s(?<attack4>(?:(?:[^,.:;](?!or))+))(?:\sor\s(?<attack5>\w+))?)?`;
-    //static makesAttack3 = String.raw`makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack6>(?:.(?!or))*)(?:\sor\s(?<attack7>.*))?\sin any combination|(?:\w+\s)?with\s(its\s)?(?<attack8>(?:.(?!and))*)(?:\sand\s\w+\swith\s(its\s)?(?<attack9>[^.]+))?.)`;
     static makesAttack3 = String.raw`makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack6>(?:.(?!or))*)(?:\sor\s(?<attack7>.*))?\sin any combination|(?:\w+\s)?with\s(?:its\s)?(?<attack8>(?:.(?!\band|\bor))*)(?:\s(?:\band\b|\bor\b)\s\w+\swith\s(?:its\s)?(?<attack9>(?:.(?!\band|\bor))*))?(?:\s(?:\band\b|\bor\b)\s\w+\swith\s(?:its\s)?(?<attack10>(?:.(?!\band|\bor))*))?)`;
     static makesAttack4 = String.raw`\suses?\sits\s(?<attack11>(?:[^.,:;](?!or))*)`
     
