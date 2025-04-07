@@ -114,15 +114,15 @@ export class sbiActor {
 
         // Enrich references to existing actions
         enrichedDescription = enrichedDescription.replace(sRegex.makesAttack, (match, ...groups) => {
-            const attacks = groups.slice(0, 10).filter(a => a);
+            const attacks = [...new Set(groups.slice(0, 10).filter(a => a))];
             let result = match;
             attacks.forEach(attack => {
                 if (attack.toLowerCase() === "spellcasting") {
-                    result = result.replace(attack, "[[/item Spellcasting]]");
+                    result = result.replaceAll(attack, "[[/item Spellcasting]]");
                 } else {
                     const matchedAction = this.actions.find(a => compareItems(a.name, attack));
                     if (matchedAction) {
-                        result = result.replace(attack, "[[/item " + matchedAction.name + "]]");
+                        result = result.replaceAll(attack, "[[/item " + matchedAction.name + "]]");
                     }
                 }
             });
