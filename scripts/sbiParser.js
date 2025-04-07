@@ -20,6 +20,7 @@ export class sbiParser {
 
     static actor;
     static statBlocks;
+    static cleanLines = false;
 
     static fixNewLines(inputText) {
         // Identify unneeded line breaks, like:
@@ -37,6 +38,9 @@ export class sbiParser {
 
         if (lines.length) {
 
+            // Are new lines in this text actual new lines or just layout? We can make different assumptions based on this later.
+            this.cleanLines = lines.every(l => l[0].toUpperCase() === l[0]);
+            
             // Assume the first line is the name.
             this.actor = new sActor(lines.shift().trim());
 
@@ -84,7 +88,7 @@ export class sbiParser {
                 // that we've found the first line of the 'features' block. BUT only if the line has
                 // a block title in it, because it could also be the second in a long line of 
                 // Damage Immunities or something like that.
-                if (!match && foundTopBlock && line.match(sRegex.blockTitle)) {
+                if (!match && foundTopBlock && line.match(sRegex.getBlockTitle(this.cleanLines))) {
                     foundTopBlock = false;
                     lastBlockId = Blocks.features.id;
                     this.statBlocks.set(lastBlockId, []);
@@ -849,7 +853,7 @@ export class sbiParser {
             // Check to see if we've reached the end of the spell block
             // by seeing if the next line is a title.
             const nextLineIsTitle = index < validLines.length - 1
-                && validLines[index + 1].line.match(sRegex.blockTitle)
+                && validLines[index + 1].line.match(sRegex.getBlockTitle(this.cleanLines))
                 && !validLines[index + 1].line.match(sRegex.spellGroup);
 
             if (foundSpellBlock && nextLineIsTitle) {
@@ -866,9 +870,9 @@ export class sbiParser {
         const actionsLines = [...notSpellLines, ...spellLines];
         const titleMatchesLines = [...notSpellLines, ...spellLines.slice(0, 1)];
         
-        let titleMatches = this.matchAndAnnotate(titleMatchesLines, sRegex.blockTitle);
+        let titleMatches = this.matchAndAnnotate(titleMatchesLines, sRegex.getBlockTitle(this.cleanLines));
         if (!titleMatches.length) {
-            titleMatches = this.matchAndAnnotate(titleMatchesLines, sRegex.villainActionTitle);
+            titleMatches = this.matchAndAnnotate(titleMatchesLines, sRegex.getVillainActionTitle(this.cleanLines));
         }
 
         let i = -1;

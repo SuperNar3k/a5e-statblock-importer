@@ -76,8 +76,22 @@ export class sbiRegex {
     // ([\w\d\-+,;'’]+\s?){0,3}                         <-  Represents the words that follow the first word, using the same regex for the allowed characters.
     //                                                      We assume the title only has 0-3 words following it, otherwise it's probably a sentence.
     // (\((?!spell save)[^)]+\))?                       <-  Represents an optional bit in parentheses, like '(Recharge 5-6)'.
-    static blockTitle = /(?:^|[.:!]\s*\n)(?<title>(?:[A-Z][\w\d\-+,;'’]+[\s\-]?)(?:(?:of|and|the|from|in|at|on|with|to|by|into)\s)?(?:[\w\d\-+,;'’]+\s?){0,3})(?:\s\((?!spell save)[^)]+\))?[.:!]/dg;
-    static villainActionTitle = /(^|[.!]\s*\n)(?<title>Action\s[123]:\s.+[.!?])/dg;
+    static blockTitleBase = String.raw`(?<title>(?:[A-Z][\w\d\-+,;'’]+[\s\-]?)(?:(?:of|and|the|from|in|at|on|with|to|by|into)\s)?(?:[\w\d\-+,;'’]+\s?){0,3})(?:\s\((?!spell save)[^)]+\))?[.:!]`;
+    static blockTitleCleanLines = new RegExp(String.raw`(?:^|\n)` + this.blockTitleBase, "dg");
+    static blockTitle = new RegExp(String.raw`(?:^|[.:!]\s*\n)` + this.blockTitleBase, "dg");
+
+    static getBlockTitle(cleanLines = false) {
+        return cleanLines ? this.blockTitleCleanLines : this.blockTitle;
+    }
+
+    static villainActionTitleBase = String.raw`(?<title>Action\s[123]:\s.+[.!?])`;
+    static villainActionTitleCleanLines = new RegExp(String.raw`(?:^|\n)` + this.villainActionTitleBase, "dg");
+    static villainActionTitle = new RegExp(String.raw`(^|[.!]\s*\n)` + this.villainActionTitleBase, "dg");
+
+    static getVillainActionTitle(cleanLines = false) {
+        return cleanLines ? this.villainActionTitleCleanLines : this.villainActionTitle;
+    }
+
     // The rest of these are utility regexes to pull out specific data.
     static abilityNames = new RegExp(String.raw`(?<abilityName>${this.abilitiesBase})`, "idg");
     static abilityValues = /(?<base>\d+)\s?(?:\((?<modifier>[\+\-−–]?\d+)\))?/dg;
@@ -110,9 +124,10 @@ export class sbiRegex {
     // Regexes for description enrichment
     static makesAttack1 = String.raw`with\sa\suse\sof\s(?:.*\sor\s(?:\(\w\)\s)?)?(?<attack1>(?:[^,.:;(\s]+\s?){1,4})(?:[,.:;]|\sto cast)`;
     static makesAttack2 = String.raw`makes?\s\w+\s(?<attack2>(?:[^,.:;\s]+\s?){1,4})\sattacks?(?:\sand\s\w+\s(?<attack3>(?:[^,.:;\s]+\s?){1,4})\sattacks?)?(?:\sand\suses\s(?<attack4>(?:(?:[^,.:;](?!or))+))(?:\sor\s(?<attack5>\w+))?)?`;
-    static makesAttack3 = String.raw`makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack6>(?:.(?!or))*)(?:\sor\s(?<attack7>.*))?\sin any combination|(?:\w+\s)?with\sits\s(?<attack8>(?:.(?!and))*)(?:\sand\s\w+\swith\sits\s(?<attack9>[^.]+))?.)`;
-    static makesAttack4 = String.raw`\suses?\sits\s(?<attack10>(?:[^.,:;](?!or))*)`
-    //static makesAttack = /with\sa\suse\sof\s(?:.*\sor\s(?:\(\w\)\s)?)?(?<attack1>(?:[^,.:;(\s]+\s?){1,4})(?:[,.:;]|\sto cast)|makes?\s\w+\s(?<attack2>(?:[^,.:;\s]+\s?){1,4})\sattacks?(?:\sand\s\w+\s(?<attack3>(?:[^,.:;\s]+\s?){1,4})\sattacks?)?(?:\sand\suses\s(?<attack4>(?:(?:[^,.:;](?!or))+))(?:\sor\s(?<attack5>\w+))?)?|makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack6>(?:.(?!or))*)(?:\sor\s(?<attack7>.*))?\sin any combination|(?:\w+\s)?with\sits\s(?<attack8>(?:.(?!and))*)(?:\sand\s\w+\swith\sits\s(?<attack9>[^.]+))?.)/ig;
+    //static makesAttack3 = String.raw`makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack6>(?:.(?!or))*)(?:\sor\s(?<attack7>.*))?\sin any combination|(?:\w+\s)?with\s(its\s)?(?<attack8>(?:.(?!and))*)(?:\sand\s\w+\swith\s(its\s)?(?<attack9>[^.]+))?.)`;
+    static makesAttack3 = String.raw`makes?\s\w+\sattacks?[,:]?\s(?:using\s(?<attack6>(?:.(?!or))*)(?:\sor\s(?<attack7>.*))?\sin any combination|(?:\w+\s)?with\s(?:its\s)?(?<attack8>(?:.(?!\band|\bor))*)(?:\s(?:\band\b|\bor\b)\s\w+\swith\s(?:its\s)?(?<attack9>(?:.(?!\band|\bor))*))?(?:\s(?:\band\b|\bor\b)\s\w+\swith\s(?:its\s)?(?<attack10>(?:.(?!\band|\bor))*))?)`;
+    static makesAttack4 = String.raw`\suses?\sits\s(?<attack11>(?:[^.,:;](?!or))*)`
+    
     static makesAttack = new RegExp(this.makesAttack1 + "|" + this.makesAttack2 + "|" + this.makesAttack3 + "|" + this.makesAttack4, "igs");
 
 }
