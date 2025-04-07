@@ -887,7 +887,9 @@ export class sbiParser {
             }
             return acc;
         }, []);
-        actions.push(action);
+        if (action) {
+            actions.push(action);
+        }
 
         return actions;
     }
