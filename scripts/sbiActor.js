@@ -786,7 +786,15 @@ export class sbiActor {
             // Update cast activities to have the spells shown in the spellbook
             for (const item of actor5e.items) {
                 for (const castActivity of item.system.activities.filter(a => a.type === "cast")) {
-                    await castActivity.update({"spell.spellbook": true});
+
+                    // We only display the spell in the spellbook if it's not already granted by the Spellcasting feature
+                    const spellAlreadyInSpellcasting = castActivity.item.name !== this.spellcastingFeature.featureName && this.spellcastingFeature?.spellInfo?.some(
+                        spellGroup => Array.isArray(spellGroup.value) && spellGroup.value.some(s => s.name.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_") === castActivity._inferredSource.name.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_"))
+                    );
+
+                    if (!spellAlreadyInSpellcasting) {
+                        await castActivity.update({"spell.spellbook": true});
+                    }
                 }
             }
         }
