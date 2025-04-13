@@ -835,7 +835,7 @@ export class sbiParser {
             let l = validLines[index];
 
             if (!foundSpellBlock) {
-                foundSpellBlock = l.line.match(/\binnate spellcasting\b|\bspellcasting\b/i) != null;
+                foundSpellBlock = l.line.match(/^innate spellcasting\b|^spellcasting\b/i) != null;
                 if (foundSpellBlock && l.line === "Spellcasting" && !l.line.endsWith(".")) {
                     l.line = l.line + ".";
                 }
