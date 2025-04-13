@@ -76,7 +76,7 @@ export class sbiRegex {
     // ([\w\d\-+,;'’]+\s?){0,3}                         <-  Represents the words that follow the first word, using the same regex for the allowed characters.
     //                                                      We assume the title only has 0-3 words following it, otherwise it's probably a sentence.
     // (\((?!spell save)[^)]+\))?                       <-  Represents an optional bit in parentheses, like '(Recharge 5-6)'.
-    static blockTitleBase = String.raw`(?<title>(?:[A-Z][\w\d\-+,;'’]+[\s\-]?)(?:(?:of|and|the|from|in|at|on|with|to|by|into)\s)?(?:[\w\d\-+,;'’]+\s?){0,3})(?:\s\((?!spell save)[^)]+\))?[.:!]`;
+    static blockTitleBase = String.raw`(?<title>(?:[A-Z][\w\d\-+,;'’]+[\s\-]?)(?:(?:of|and|the|from|in|at|on|with|to|by|into)\s)?(?:[\w\d\-+,;'’]+\s?){0,3})(?:\s\((?!spell save)[^)]+\))?(?:[.!]|\:(?!\s*\d))`;
     static blockTitleCleanLines = new RegExp(String.raw`(?:^|\n)` + this.blockTitleBase, "dg");
     static blockTitle = new RegExp(String.raw`(?:^|[.:!]\s*\n)` + this.blockTitleBase, "dg");
 
@@ -100,7 +100,7 @@ export class sbiRegex {
     static actionCost = /\((costs )?(?<cost>\d+) action(s)?\)/idg;
     static attack = new RegExp(String.raw`\+(?<toHit>\d+)\sto\shit\b(?:(?:.(?!dc\s\d+))*${this.conditionBase})?`, "idgs");
     static attack24 = new RegExp(String.raw`attack\sroll:\s*\+(?<toHit>\d+)(?:(?:.(?!dc\s\d+))*${this.conditionBase})?`, "idgs");
-    static castAction = /^(?<featureName>[^.]+)\.\s?(?<monsterDesc>(?:\w+\s){1,4})(?:\bcasts|\bcan innately cast|\bspellcasting to cast)\s(?!a\s|one\s\of\s)(?<spellList>.*?),?\s?(?:in response|using|requiring|\.)/idg;
+    static castAction = /^(?<featureName>[^.:!]+)[.:!]\s?(?<monsterDesc>(?:\w+\s){1,4})(?:\bcasts|\bcan innately cast|\bspellcasting to cast)\s(?!a\s|one\s\of\s)(?<spellList>.*?),?\s?(?:in response|using|requiring|\.)/idg;
     static castActionSpell = /(?<=^|,|\bor\s)\s?(?:(?:or\s)?(?<spellName>\b(?:[^,.:;](?!or|\())+)(?:\s\(level\s(?<spellLevel>\d+)\sversion\))?)/idg;
     static conditionTypes = new RegExp(this.conditionBase, "idg");
     static damageRoll = /\(?(?<baseDamageRoll>\d+d\d+?)\s?(?<baseDamageMod>[+-]\s?\d+)?\)?\s(?<baseDamageType>\w+)(?:\sdamage)(?:.+(?:(?:\bor\s+(?:\d+\s+\(*)?(?:(?<versatileDamageRoll>\d+d\d+?)\s?(?<versatileDamageMod>[+-]\s?\d+)?)\)?\s(?<versatileDamageType>\w+)(?:\sdamage\sif\sused\swith\stwo\shands))|(?:plus|and)\s+(?:\d+\s+\(*)?(?:(?<addDamageRoll>\d+d\d+?)\s?(?<addDamageMod>[+-]\s?\d+)?)\)?\s(?<addDamageType>\w+)(?:\sdamage)))?/idg
