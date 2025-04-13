@@ -545,7 +545,8 @@ export class sbiActor {
         if (!spell) {
             this.missingSpells.push(spellName);
             const activityId = foundry.utils.randomID();
-            spell = {
+            // We actually create the item so that it can be referenced correctly and displayed in the spellbook
+            const spellItem = await Item.create({
                 name: spellName,
                 type: "spell",
                 system: {
@@ -553,7 +554,9 @@ export class sbiActor {
                         [activityId]: {_id: activityId, type: "utility", activation: {type: "action", value: 1}}
                     }
                 }
-            };
+            });
+            spell = spellItem.toObject();
+            spell.uuid = spellItem.uuid;
         }
         if (spell.system.source?.rules === "2014" && game.settings.get("dnd5e", "rulesVersion") !== "legacy") {
             this.obsoleteSpells.push(spellName);
@@ -1029,11 +1032,11 @@ export class sbiActor {
                 castActivity.name = spellObj.name; // This is not actually going to be saved (name is going to be derived from the spell itself), but we need it to compare later
 
                 const spell = await this.fetchSpellByName(spellObj.name);
-                spellObj.uuid = spell.sourceUuid;
+                spellObj.uuid = spell.sourceUuid ?? spell.uuid;
 
                 if (useActivities) {
                     castActivity.spell = {
-                        uuid: spell.sourceUuid,
+                        uuid: spellObj.uuid,
                         level: spellObj.level ?? spell.system.level,
                         spellbook: false, // this will be updated after the actor is created
                     };
