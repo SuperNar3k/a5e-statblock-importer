@@ -540,13 +540,12 @@ export class sbiActor {
         }
     }
 
-    async fetchSpellByName(spellName) {
+    async fetchSpellByName(spellName, useActivities) {
         let spell = await sUtils.getItemFromPacksAsync(spellName, "spell");
         if (!spell) {
             this.missingSpells.push(spellName);
             const activityId = foundry.utils.randomID();
-            // We actually create the item so that it can be referenced correctly and displayed in the spellbook
-            const spellItem = await Item.create({
+            spell = {
                 name: spellName,
                 type: "spell",
                 system: {
@@ -554,9 +553,14 @@ export class sbiActor {
                         [activityId]: {_id: activityId, type: "utility", activation: {type: "action", value: 1}}
                     }
                 }
-            });
-            spell = spellItem.toObject();
-            spell.uuid = spellItem.uuid;
+            };
+
+            if (useActivities) {
+                // We actually create the item so that it can be referenced correctly and displayed in the spellbook
+                const spellItem = await Item.create(spellObj);
+                spell = spellItem.toObject();
+                spell.uuid = spellItem.uuid;
+            }
         }
         if (spell.system.source?.rules === "2014" && game.settings.get("dnd5e", "rulesVersion") !== "legacy") {
             this.obsoleteSpells.push(spellName);
@@ -570,7 +574,7 @@ export class sbiActor {
             let updatedDescription = itemData.system.description.value;
 
             for (const spellObj of actionData.value.castSpells || []) {
-                const spell = await this.fetchSpellByName(spellObj.name);
+                const spell = await this.fetchSpellByName(spellObj.name, true);
 
                 if (spell.sourceUuid) {
                     updatedDescription = updatedDescription.replaceAll(spellObj.name, "<em>@UUID[" + spell.sourceUuid + "]</em>");
@@ -1031,7 +1035,7 @@ export class sbiActor {
                 let castActivity = {_id: foundry.utils.randomID(), type: "cast"};
                 castActivity.name = spellObj.name; // This is not actually going to be saved (name is going to be derived from the spell itself), but we need it to compare later
 
-                const spell = await this.fetchSpellByName(spellObj.name);
+                const spell = await this.fetchSpellByName(spellObj.name, useActivities);
                 spellObj.uuid = spell.sourceUuid ?? spell.uuid;
 
                 if (useActivities) {
