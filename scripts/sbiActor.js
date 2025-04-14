@@ -560,7 +560,7 @@ export class sbiActor {
 
             if (useActivities) {
                 // We actually create the item so that it can be referenced correctly and displayed in the spellbook
-                const spellItem = await Item.create(spellObj);
+                const spellItem = await Item.create(spell);
                 spell = spellItem.toObject();
                 spell.uuid = spellItem.uuid;
             }
