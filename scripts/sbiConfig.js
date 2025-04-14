@@ -84,7 +84,7 @@ export function getPacks() {
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
-class CompendiumOptionsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
+export class CompendiumOptionsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
 
     static DEFAULT_OPTIONS = {
         tag: "form",

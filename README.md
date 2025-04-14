@@ -91,7 +91,7 @@ console.log(parsedGlabrezu);
 //      unknownLines: an array containing any line that was not assigned to a block.
 
 const myFolder = game.folders.getName("My Folder").id;
-const glabrezuActor5e = await parsedGlabrezu.actor.createActor5e(myFolder.id);
+const { actor5e, importIssues } = await parsedGlabrezu.actor.createActor5e(myFolder.id);
 ```
 ```js
 // Direct import
@@ -103,7 +103,7 @@ const glabrezu = String.raw
     ...
     target. Hit: 7 (2d4 + 2) bludgeoning damage.`;
 const myFolder = game.folders.getName("My Folder").id;
-const glabrezuActor5e = await sbiApi.import(glabrezu, myFolder.id);
+const { actor5e, importIssues } = await sbiApi.import(glabrezu, myFolder.id);
 ```
 
 ## Issues

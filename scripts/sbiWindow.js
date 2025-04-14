@@ -1,6 +1,6 @@
 import { sbiUtils } from "./sbiUtils.js";
 import { sbiParser } from "./sbiParser.js";
-import { MODULE_NAME } from "./sbiConfig.js";
+import { MODULE_NAME, CompendiumOptionsMenu } from "./sbiConfig.js";
 import { Blocks } from "./sbiData.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -23,7 +23,8 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         },
         actions: {
             parse: sbiWindow.parse,
-            import: sbiWindow.import
+            import: sbiWindow.import,
+            compendiumOptions: sbiWindow.openCompendiumOptions,
         }
     };
 
@@ -32,6 +33,11 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
             template: `modules/${MODULE_NAME}/templates/sbiWindow.hbs`
         }
     };
+
+    static openCompendiumOptions() {
+        const menu = new CompendiumOptionsMenu();
+        menu.render(true);
+    }
 
     static sbiInputWindowInstance = {};
 
@@ -180,10 +186,10 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
             }
 
             if (unknownLines.length) {
-                sbiUtils.warn("Found unaccounted for lines", true, unknownLines);
+                sbiUtils.warn("Found unaccounted for lines", /*true,*/ unknownLines);
             }
 
-            sbiUtils.log("Parsing completed", true, statBlocks, actor);
+            sbiUtils.log("Parsing completed", /*true,*/ statBlocks, actor);
             
             // Each line will be its own div, with data attributes indicating their block
             let divLines = lines.map((line, i) => {
@@ -309,7 +315,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
             return { actor, statBlocks };
             
         } catch (error) {
-            sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", true, error);
+            sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", error);
         }
     }
 
@@ -320,13 +326,40 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         const parseResult = sbiWindow.parse();
         if (parseResult?.actor) {
             try {
-                const actor5e = await parseResult.actor.createActor5e(selectedFolderId);
+                const { actor5e, importIssues } = await parseResult.actor.createActor5e(selectedFolderId);
+                document.querySelectorAll(".sbi-issue").forEach(i => i.remove());
+                sbiWindow.processIssues(importIssues);
                 // Open the sheet.
                 actor5e.sheet.render(true);
             } catch (error) {
-                sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", true, error);
+                sbiUtils.error("An error has occured (" + error.stack.split("\n", 1).join("") + "). Please report it using the module link so it can get fixed.", error);
             }
         }
+    }
+
+    static addIssueMessage(content) {
+        const issueElement = document.createElement("div");
+        issueElement.classList.add("sbi-issue");
+        issueElement.innerHTML = content;
+        document.getElementById("sbi-issues").appendChild(issueElement);
+        sbiUtils.warn(issueElement.innerText);
+    }
+
+    static processIssues(issues) {
+        let message;
+        if (issues.missingSpells?.length) {
+            message = "Some spells could not be found in your compendiums and have been created as placeholders: " + issues.missingSpells.join(", ");
+            this.addIssueMessage(message);
+        }
+        if (issues.obsoleteSpells?.length) {
+            message = `Some spells have been imported from 2014 sources while you are playing with 2024 rules, review your <a data-action="compendiumOptions">Compendium Options</a>: ` + issues.obsoleteSpells.join(", ");
+            this.addIssueMessage(message);
+        }
+        if (issues.crNotFound) {
+            message = "Could not find CR information. Some calculated attack information could be wrong.";
+            this.addIssueMessage(message);
+        }
+        
     }
 
 }

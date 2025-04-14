@@ -6,8 +6,6 @@ import { sbiRegex as sRegex} from "./sbiRegex.js";
 export class sbiActor {
     #dnd5e = {};
 
-    #canUseUi = true;
-
     constructor(name) {
         this.name = name;                           // string
         this.actions = [];                          // NameValueData[]
@@ -41,6 +39,11 @@ export class sbiActor {
         this.type = null;                           // string
         this.utilitySpells = {};                    // {object, NameValueData[]} (MCDM)
         this.villainActions = [];                   // NameValueData[]           (MCDM)
+        this.importIssues = {
+            missingSpells: [],
+            obsoleteSpells: [],
+            crNotFound: false,
+        };
     }
 
     get spellcastingFeature() {
@@ -543,7 +546,7 @@ export class sbiActor {
     async fetchSpellByName(spellName, useActivities) {
         let spell = await sUtils.getItemFromPacksAsync(spellName, "spell");
         if (!spell) {
-            this.missingSpells.push(spellName);
+            this.importIssues.missingSpells.push(spellName);
             const activityId = foundry.utils.randomID();
             spell = {
                 name: spellName,
@@ -563,7 +566,7 @@ export class sbiActor {
             }
         }
         if (spell.system.source?.rules === "2014" && game.settings.get("dnd5e", "rulesVersion") !== "legacy") {
-            this.obsoleteSpells.push(spellName);
+            this.importIssues.obsoleteSpells.push(spellName);
         }
         return spell;
     }
@@ -742,7 +745,7 @@ export class sbiActor {
             this.set5eProperty("system.details.cr", sUtils.getMinLevel(this.challenge.pb));
         } else {
             this.set5eProperty("system.details.cr", 0);
-            sUtils.warn("Could not find CR information. Some calculated attack information could be wrong.", this.#canUseUi);
+            this.importIssues.crNotFound = true;
         }
     }
 
@@ -768,8 +771,7 @@ export class sbiActor {
         }
     }
 
-    async createActor5e(selectedFolderId, withUi = true) {
-        this.#canUseUi = withUi;
+    async createActor5e(selectedFolderId) {
 
         await this.updateActorData();
 
@@ -783,7 +785,7 @@ export class sbiActor {
             await this.setSkills(actor5e);
 
             // Check if AC needs fixed (if mage armor, skip check)
-            if (!this.armor.types.includes("mage") && this.armor.ac !== actor5e.system.attributes.ac.value) {
+            if (this.armor && !this.armor.types.includes("mage") && this.armor.ac !== actor5e.system.attributes.ac.value) {
                 actor5e.update({
                     "system.attributes.ac.calc": "flat",
                     "system.attributes.ac.flat": this.armor.ac
@@ -795,7 +797,7 @@ export class sbiActor {
                 for (const castActivity of item.system.activities.filter(a => a.type === "cast")) {
 
                     // We only display the spell in the spellbook if it's not already granted by the Spellcasting feature
-                    const spellAlreadyInSpellcasting = castActivity.item.name !== this.spellcastingFeature.featureName && this.spellcastingFeature?.spellInfo?.some(
+                    const spellAlreadyInSpellcasting = castActivity.item.name !== this.spellcastingFeature?.featureName && this.spellcastingFeature?.spellInfo?.some(
                         spellGroup => Array.isArray(spellGroup.value) && spellGroup.value.some(s => s.name.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_") === castActivity._inferredSource.name.toLowerCase().replace(/[^a-zA-Z0-9]/g, "_"))
                     );
 
@@ -806,7 +808,17 @@ export class sbiActor {
             }
         }
 
-        return actor5e;
+        if (!this.importIssues.missingSpells.length) {
+            delete this.importIssues.missingSpells;
+        }
+        if (!this.importIssues.obsoleteSpells.length) {
+            delete this.importIssues.obsoleteSpells;
+        }
+        if (!this.importIssues.crNotFound) {
+            delete this.importIssues.crNotFound;
+        }
+
+        return {actor5e, importIssues: this.importIssues};
     }
 
     setHealth() {
@@ -987,18 +999,10 @@ export class sbiActor {
     }
 
     async setSpells() {
-        this.missingSpells = [];
-        this.obsoleteSpells = [];
         for (const spellcastingType of ["spellcasting", "innateSpellcasting", "utilitySpells"]) {
             if (this[spellcastingType].spellInfo) {
                 await this.setSpellcasting(spellcastingType);
             }
-        }
-        if (this.missingSpells.length) {
-            sUtils.warn("Some spells could not be found in your compendiums and have been created as placeholders: " + this.missingSpells.join(", "), this.#canUseUi);
-        }
-        if (this.obsoleteSpells.length) {
-            sUtils.warn("Some spells have been imported from 2014 sources while you are playing with 2024 rules, review your Compendium Options: " + this.obsoleteSpells.join(", "), this.#canUseUi);
         }
     }
 

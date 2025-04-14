@@ -4,30 +4,26 @@ const logPrefix = "5e Statblock Importer |";
 
 export class sbiUtils {
 
-    static notify(type, message, withUi = true, ...objects) {
+    static notify(type, message, ...objects) {
         let consoleMethod = type === "info" ? "log" : type;
         if (type !== "info" || game.settings.get(MODULE_NAME, "debug")) {
-            if (withUi) {
-                ui.notifications[type](logPrefix + " " + message);
-            } else {
-                console[consoleMethod](logPrefix + " " + message);
-            }
+            ui.notifications[type](logPrefix + " " + message);
             if (objects.length) {
                 console[consoleMethod](logPrefix, ...objects);
             }
         }
     }
 
-    static log(message, withUi = true, ...objects) {
-        this.notify("info", message, withUi, ...objects);
+    static log(message, ...objects) {
+        this.notify("info", message, ...objects);
     }
 
-    static warn(message, withUi = true, ...objects) {
-        this.notify("warn", message, withUi, ...objects);
+    static warn(message, ...objects) {
+        this.notify("warn", message, ...objects);
     }
 
-    static error(message, withUi = true, ...objects) {
-        this.notify("error", message, withUi, ...objects);
+    static error(message, ...objects) {
+        this.notify("error", message, ...objects);
     }
 
     static stripMarkdownAndCleanInput(text) {
