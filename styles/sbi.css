@@ -1,3 +1,14 @@
+body {
+    --matched-color: #000099;
+    --matched-hover-color: #0011ff;
+    --line-hover-bg-color: #aaa;
+    &.theme-dark {
+        --matched-color: #e7d1b1;
+        --matched-hover-color: #ffc064;
+        --line-hover-bg-color: #555;
+    }
+}
+
 #sbi-window .window-content > form {
     display: flex;
     flex-direction: column;
@@ -71,7 +82,7 @@
 }
 
 #sbi-input .block-container.drag-over {
-    background-color: #aaa;
+    background-color: var(--line-hover-bg-color);
 }
 
 #sbi-input .line-container {
@@ -79,7 +90,7 @@
 }
 
 #sbi-input .line-container:hover {
-    background-color: #aaa;
+    background-color: var(--line-hover-bg-color);
 }
 
 #sbi-input span.hint::before {
@@ -102,11 +113,11 @@
 #sbi-input span span.matched {
     display: inline;
     text-decoration: underline;
-    color: #000099;
+    color: var(--matched-color);
 }
 
 #sbi-input span span.matched:hover {
-    color: #0011ff;
+    color: var(--matched-hover-color);
 }
 
 #sbi-tooltip {

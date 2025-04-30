@@ -794,7 +794,7 @@ export class sbiActor {
 
             // Update cast activities to have the spells shown in the spellbook
             for (const item of actor5e.items) {
-                for (const castActivity of item.system.activities.filter(a => a.type === "cast")) {
+                for (const castActivity of (item.system.activities ?? []).filter(a => a.type === "cast")) {
 
                     // We only display the spell in the spellbook if it's not already granted by the Spellcasting feature
                     const spellAlreadyInSpellcasting = castActivity.item.name !== this.spellcastingFeature?.featureName && this.spellcastingFeature?.spellInfo?.some(
