@@ -322,7 +322,7 @@ export class sbiParser {
         this.actor.gear.push(...armorTypes.filter(t => t.toLowerCase() !== "natural armor").map(t => new NameValueData(t.toLowerCase(), 1)));
 
         if (match.groups.initiativeModifier) {
-            this.actor.initiative = {mod: parseInt(match.groups.initiativeModifier), score: parseInt(match.groups.initiativeScore)};
+            this.actor.initiative = {mod: parseInt(match.groups.initiativeModifier.replace(/[−–]/, "-")), score: parseInt(match.groups.initiativeScore)};
         }
     }
 
@@ -337,7 +337,7 @@ export class sbiParser {
         const match = this.matchAndAnnotate(lines, sRegex.initiativeDetails)?.[0];
         if (!match) return;
         
-        this.actor.initiative = {mod: parseInt(match.groups.initiativeModifier), score: parseInt(match.groups.initiativeScore)};
+        this.actor.initiative = {mod: parseInt(match.groups.initiativeModifier.replace(/[−–]/, "-")), score: parseInt(match.groups.initiativeScore)};
     }
 
     static parseChallenge(lines) {
