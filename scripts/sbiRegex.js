@@ -110,7 +110,7 @@ export class sbiRegex {
     static lairInitiativeCount = /initiative\scount\s(?<initiativeCount>\d+)/idg;
     
     static spellGroup = /(?<spellGroup>(?:cantrips|at.will|(?<level>\d+)(?:st|nd|rd|th)\slevel|(?<perDay>\d+)\/day)\s?(?:each)?(?:\s?\((?:(?<slots>\d+)\sslots?|at.will)\))?):\s?/idg;
-    static spellName = /(?<=^|,)\s*[*\s]*(?<spellName>[^.,:]+?)(?:\s\(level\s(?<spellLevel>\d+)[^)]*\))?(?:\s\((?<affectsAC>included in ac)\))?[*\s]*(\s[ABR]|\s?\+)?(?:\s*\(.*?\)\s*)?(?=,|[\s.:]+$)/idg;
+    static spellName = /(?<=^|,)\s*[*\s]*(?<spellName>[^\n.,:]+?)(?:\s\(level\s(?<spellLevel>\d+)[^)]*\))?(?:\s\((?<affectsAC>included in ac)\))?[*\s]*(\s[ABR]|\s?\+)?(?:\s*\(.*?\)\s*)?(?=,|[\s.:]*$)/idg;
     
     static spellLine = /(at-will|cantrips|1st|2nd|3rd|4th|5th|6th|7th|8th|9th)[\w\s\(\)-]*:/ig;
     static spellInnateLine = /at will:|\d\/day( each)?/ig;

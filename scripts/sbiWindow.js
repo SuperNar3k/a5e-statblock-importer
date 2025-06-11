@@ -179,7 +179,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
         try {
             const { actor, statBlocks, unknownLines, lines } = sbiParser.parseInput(input.innerText, hints);
-            console.log(actor, statBlocks);
+            //console.log(actor, statBlocks);
 
             if (!statBlocks.size) {
                 sbiUtils.error("Unable to parse statblock");
