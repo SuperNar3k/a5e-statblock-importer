@@ -340,7 +340,7 @@ export class sbiActor {
             effect = {
                 _id: foundry.utils.randomID(),
                 name: itemData.name + ": " + sUtils.capitalizeAll(condition),
-                img: itemData.img ?? `systems/dnd5e/icons/svg/statuses/${condition.toLowerCase()}.svg`,
+                img: itemData.img ?? `systems/a5e/icons/svg/statuses/${condition.toLowerCase()}.svg`,
                 transfer: false,
                 type: "base",
                 statuses: [condition.toLowerCase()],
