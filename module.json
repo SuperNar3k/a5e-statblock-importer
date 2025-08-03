@@ -1,32 +1,28 @@
 {
-    "id": "5e-statblock-importer",
-    "title": "5e Statblock Importer",
+    "id": "a5e-statblock-importer",
+    "title": "Super's A5e Statblock Importer",
     "description": "Import monster and NPC statblocks for D&D 5e",
-    "version": "2.1.10",
+    "version": "1.0.0",
     "compatibility": {
         "minimum": "12.331",
         "verified": "13.345"
     },
     "authors": [
         {
-            "name": "Aioros",
-            "email": "aioros83@gmail.com",
-            "discord": "MrAioros"
-        },
-        {
-            "name": "ArcaneRoboBrain",
-            "discord": "ArcaneRoboBrain#6885"
+            "name": "SuperNar3k",
+            "email": "ohanyanarek@gmail.com",
+            "discord": "SuperNar3k"
         }
     ],
     "relationships": {
         "systems": [
             {
-                "id": "a5e",
+                "id": "dnd5e",
                 "type": "system",
                 "compatibility": {
-                    "minimum": "1.0.1",,
-                    "maximum": "5.0.1",
-                    "verified": "1.0.10"
+                    "minimum": "4.3.0",
+                    "maximum": "5.999",
+                    "verified": "5.0.3"
                 }
             }
         ]
@@ -38,6 +34,6 @@
         "./styles/sbi.css"
     ],
     "url": "https://github.com/Aioros/5e-statblock-importer",
-    "manifest": "https://raw.githubusercontent.com/Aioros/5e-statblock-importer/main/module.json",
-    "download": "https://github.com/Aioros/5e-statblock-importer/releases/download/v2.1.10/5e-statblock-importer-v2.1.10.zip"
+    "manifest": "https://raw.githubusercontent.com/SuperNar3k/a5e-statblock-importer/refs/heads/main/module.json",
+    "download": "https://github.com/SuperNar3k/a5e-statblock-importer/releases/download/v1.0.0/a5e-statblock-importer-v1.0.0.zip"
 }
