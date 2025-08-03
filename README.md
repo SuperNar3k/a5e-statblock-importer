@@ -3,8 +3,8 @@
 ![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2F5e-statblock-importer&colorB=blueviolet)
 ![License](https://img.shields.io/github/license/Aioros/5e-statblock-importer)
 
-# 5e Statblock Importer
-A module for FoundryVTT's **Dungeons & Dragons Fifth Edition** System. Easily import 5e monster and NPC statblocks into your game. As long as it's formatted using the standard WotC layout, it'll create a new actor with an NPC character sheet using those stats.
+# A5e Statblock Importer
+A module for FoundryVTT's **Advanced Dungeons & Dragons Fifth Edition** System. Easily import a5e monster and NPC statblocks into your game. As long as it's formatted using the standard WotC layout, it'll create a new actor with an NPC character sheet using those stats.
 
 ## How to use
 Once installed, you'll see a new button at the bottom of the characters tab that looks like this:
@@ -110,7 +110,7 @@ const { actor5e, importIssues } = await sbiApi.import(glabrezu, myFolder.id);
 If you find a statblock that doesn't import correctly, open an issue [here](https://github.com/Aioros/5e-statblock-importer/issues) and include the text that you were trying to use.
 
 ## Credit
-Most of the work on this module was done by [James Haywood](https://github.com/jbhaywood). This fork aims to continue improving and supporting new formats and new Foundry/dnd5e versions while keeping the original vision intact.
+Most of the work on this module was done by [James Haywood](https://github.com/jbhaywood). This fork aims to make the A5E System compatible.
 
 ## Original Credit
 This module was based on the [Pathfinder 1e Statblock Library](https://github.com/baileymh/statblock-library) module because I hadn't made a module before and needed a place to start.
