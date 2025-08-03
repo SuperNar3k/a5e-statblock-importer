@@ -1,6 +1,6 @@
 import sortablejs from '../lib/sortable.1.15.6.js';
 
-export const MODULE_NAME = "5e-statblock-importer";
+export const MODULE_NAME = "A5e-statblock-importer";
 
 export function registerSettings() {
     game.settings.registerMenu(MODULE_NAME, "CompendiumOptionsMenu", {
@@ -52,12 +52,12 @@ export function getPacks() {
             let disabled = false;
             return { active, priority, disabled, ...p };
         });
-    const srdCollection = game.settings.get("dnd5e", "rulesVersion") === "legacy" ? "dnd5e.spells" : "dnd5e.spells24";
+    const srdCollection = game.settings.get("a5e", "rulesVersion") === "legacy" ? "a5e.spells" : "a5e.spells24";
     // The appropriate one according to the rules setting will be locked as active.
     let srd = spellCompendiums.find(p => p.collection === srdCollection);
     if (!srd) {
         // This happens in the interim, when the "spells24" one doesn't exist yet.
-        srd = spellCompendiums.find(p => p.collection === "dnd5e.spells");
+        srd = spellCompendiums.find(p => p.collection === "a5e.spells");
     }
     srd.active = true;
     srd.disabled = true;
