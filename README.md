@@ -1,10 +1,10 @@
-![Latest Version](https://img.shields.io/github/v/release/Aioros/5e-statblock-importer?filter=!*-*)
+![Latest Version](https://img.shields.io/github/v/release/SuperNar3k/a5e-statblock-importer?filter=!*-*)
 ![Foundry Version](https://img.shields.io/endpoint?url=https%3A%2F%2Ffoundryshields.com%2Fversion%3Fstyle%3Dflat%26url%3Dhttps%3A%2F%2Fraw.githubusercontent.com%2FAioros%2F5e-statblock-importer%2Fmain%2Fmodule.json)
 ![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2F5e-statblock-importer&colorB=blueviolet)
 ![License](https://img.shields.io/github/license/Aioros/5e-statblock-importer)
 
 # A5e Statblock Importer
-A module for FoundryVTT's **Advanced Dungeons & Dragons Fifth Edition** System. Easily import a5e monster and NPC statblocks into your game. As long as it's formatted using the standard WotC layout, it'll create a new actor with an NPC character sheet using those stats.
+A module for FoundryVTT's **LevelUp Advanced Dungeons & Dragons Fifth Edition** System. Easily import a5e monster and NPC statblocks into your game. As long as it's formatted using the standard WotC layout, it'll create a new actor with an NPC character sheet using those stats.
 
 ## How to use
 Once installed, you'll see a new button at the bottom of the characters tab that looks like this:
@@ -107,13 +107,10 @@ const { actor5e, importIssues } = await sbiApi.import(glabrezu, myFolder.id);
 ```
 
 ## Issues
-If you find a statblock that doesn't import correctly, open an issue [here](https://github.com/Aioros/5e-statblock-importer/issues) and include the text that you were trying to use.
+If you find a statblock that doesn't import correctly, open an issue [here](https://github.com/SuperNar3k/a5e-statblock-importer/issues) and include the text that you were trying to use.
 
 ## Credit
 Most of the work on this module was done by [James Haywood](https://github.com/jbhaywood). This fork aims to make the A5E System compatible.
-
-## Original Credit
-This module was based on the [Pathfinder 1e Statblock Library](https://github.com/baileymh/statblock-library) module because I hadn't made a module before and needed a place to start.
 
 ## License
 This work is licensed under Foundry Virtual Tabletop [EULA - Limited License Agreement for module development v 0.1.6](http://foundryvtt.com/pages/license.html).  
