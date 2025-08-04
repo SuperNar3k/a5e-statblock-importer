@@ -30,7 +30,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
     static PARTS = {
         form: {
-            template: `../modules/${MODULE_NAME}/templates/sbiWindow.hbs`
+            template: `modules/${MODULE_NAME}/templates/sbiWindow.hbs`
         }
     };
 
