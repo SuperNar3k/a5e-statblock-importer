@@ -1,6 +1,6 @@
 import { getPacks, MODULE_NAME } from "./sbiConfig.js";
 
-const logPrefix = "5e Statblock Importer |";
+const logPrefix = "A5e Statblock Importer |";
 
 export class sbiUtils {
 
