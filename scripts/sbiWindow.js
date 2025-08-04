@@ -19,7 +19,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         classes: ["sbi-window"],
         window: {
             resizable: true,
-            title: "5e Statblock Importer"
+            title: "A5e Statblock Importer"
         },
         actions: {
             parse: sbiWindow.parse,
@@ -30,7 +30,7 @@ export class sbiWindow extends HandlebarsApplicationMixin(ApplicationV2) {
 
     static PARTS = {
         form: {
-            template: `modules/${MODULE_NAME}/templates/sbiWindow.hbs`
+            template: `../modules/${MODULE_NAME}/templates/sbiWindow.hbs`
         }
     };
 
