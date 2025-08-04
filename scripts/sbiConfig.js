@@ -1,6 +1,6 @@
 import sortablejs from '../lib/sortable.1.15.6.js';
 
-export const MODULE_NAME = "A5e-statblock-importer";
+export const MODULE_NAME = "a5e-statblock-importer";
 
 export function registerSettings() {
     game.settings.registerMenu(MODULE_NAME, "CompendiumOptionsMenu", {
@@ -92,7 +92,7 @@ export class CompendiumOptionsMenu extends HandlebarsApplicationMixin(Applicatio
         classes: ["sbi-options-menu"],
         window: {
             resizable: true,
-            title: "5e Statblock Importer - Compendium Options"
+            title: "A5e Statblock Importer - Compendium Options"
         },
         actions: {
             confirm: this.confirm,
