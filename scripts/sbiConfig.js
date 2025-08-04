@@ -102,14 +102,14 @@ export class CompendiumOptionsMenu extends HandlebarsApplicationMixin(Applicatio
 
     static PARTS = {
         header: {
-            template: `../modules/${MODULE_NAME}/templates/sbiCompendiumOptionsHeader.hbs`
+            template: `modules/${MODULE_NAME}/templates/sbiCompendiumOptionsHeader.hbs`
         },
         form: {
-            template: `../modules/${MODULE_NAME}/templates/sbiCompendiumOptions.hbs`,
+            template: `modules/${MODULE_NAME}/templates/sbiCompendiumOptions.hbs`,
             scrollable: [""]
         },
         footer: {
-            template: `../modules/${MODULE_NAME}/templates/sbiCompendiumOptionsFooter.hbs`
+            template: `modules/${MODULE_NAME}/templates/sbiCompendiumOptionsFooter.hbs`
         }
     }
 
