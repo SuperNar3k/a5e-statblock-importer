@@ -6,7 +6,7 @@
 # A5e Statblock Importer
 A module for FoundryVTT's **LevelUp Advanced Dungeons & Dragons Fifth Edition** System. Easily import a5e monster and NPC statblocks into your game. As long as it's formatted using the standard WotC layout, it'll create a new actor with an NPC character sheet using those stats.
 
-## How to use
+## How to Use
 Once installed, you'll see a new button at the bottom of the characters tab that looks like this:
 
 ![image](https://user-images.githubusercontent.com/5131886/128588603-cbbc558c-8ae5-4005-a56f-0c28afb6fcfd.png)
